@@ -10,6 +10,8 @@ Think `securityheaders.com` + `SSL Labs` + dependency-CVE checks, rebuilt as a r
 🔗 **Live demo:** _coming soon_  
 <!-- TODO: replace with a real dashboard screenshot once Month 1 ships -->
 <!-- ![SiteShield dashboard](docs/screenshot.png) -->
+<img width="1918" height="1028" alt="Siteshield Dashboard" src="https://github.com/user-attachments/assets/1404de2e-ddef-4974-a68d-377daba141e9" />
+
 
 ---
 
