@@ -41,3 +41,29 @@ class DomainOut(BaseModel):
     id: int
     url: str
     created_at: datetime
+
+
+class HeaderCheck(BaseModel):
+    header: str
+    present: bool
+    value: str | None = None
+    weight: int
+    advice: str | None = None
+
+
+class ScanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    domain_id: int
+    grade: str
+    score: int
+    created_at: datetime
+
+
+class ScanResult(BaseModel):
+    scan: ScanOut
+    final_url: str | None = None
+    status_code: int | None = None
+    checks: list[HeaderCheck]
+    error: str | None = None
