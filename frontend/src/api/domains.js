@@ -25,3 +25,7 @@ export function getScanStatus(taskId) {
 export function listScans(id) {
   return api.get(`/domains/${id}/scans`);
 }
+
+export function getDomain(id) {
+  return api.get(`/domains/${id}`);
+}

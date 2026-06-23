@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import DomainDetail from "./pages/DomainDetail";
 
 function Header({ dark, setDark }) {
   const { isAuthenticated, logout, user } = useAuth();
@@ -67,6 +68,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/domains/:id"
+              element={
+                <ProtectedRoute>
+                  <DomainDetail />
                 </ProtectedRoute>
               }
             />
