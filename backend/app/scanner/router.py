@@ -2,18 +2,20 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from celery.result import AsyncResult
 
 from app.database import get_db
 from app.models import User, Domain, Scan
-from app.schemas import ScanResult, ScanOut, HeaderCheck
+from app.schemas import ScanOut
 from app.auth.dependencies import get_current_user
-from app.scanner.headers import scan_headers
+from app.scanner.tasks import run_domain_scan
+from app.celery_app import celery_app
 
 router = APIRouter(prefix="/domains", tags=["scans"])
 
 
-@router.post("/{domain_id}/scan", response_model=ScanResult, status_code=201)
-def run_scan(
+@router.post("/{domain_id}/scan", status_code=202)
+def start_scan(
     domain_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -27,26 +29,28 @@ def run_scan(
     if domain is None:
         raise HTTPException(status_code=404, detail="Domain not found")
 
-    result = scan_headers(domain.url)
+    # Enqueue the job — returns immediately with a task id
+    task = run_domain_scan.delay(domain.id, domain.url)
+    return {"task_id": task.id, "status": "queued"}
 
-    # Persist the scan summary; store the full checks payload as JSON
-    scan = Scan(
-        domain_id=domain.id,
-        grade=result["grade"],
-        score=result["score"],
-        results_json=json.dumps(result["checks"]),
-    )
-    db.add(scan)
-    db.commit()
-    db.refresh(scan)
 
-    return ScanResult(
-        scan=ScanOut.model_validate(scan),
-        final_url=result.get("final_url"),
-        status_code=result.get("status_code"),
-        checks=[HeaderCheck(**c) for c in result["checks"]],
-        error=result.get("error"),
-    )
+@router.get("/scan-status/{task_id}")
+def scan_status(
+    task_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    result = AsyncResult(task_id, app=celery_app)
+
+    if result.state == "PENDING":
+        return {"status": "pending"}
+    if result.state == "STARTED":
+        return {"status": "running"}
+    if result.state == "SUCCESS":
+        return {"status": "done", "result": result.result}
+    if result.state == "FAILURE":
+        return {"status": "failed", "error": str(result.info)}
+
+    return {"status": result.state.lower()}
 
 
 @router.get("/{domain_id}/scans", response_model=list[ScanOut])

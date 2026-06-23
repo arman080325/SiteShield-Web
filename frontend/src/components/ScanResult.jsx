@@ -3,7 +3,8 @@ import GradeBadge from "./GradeBadge";
 export default function ScanResult({ result }) {
   if (!result) return null;
 
-  // Backend returns { scan, final_url, status_code, checks, error }
+  // The async task returns a FLAT shape:
+  // { scan_id, grade, score, final_url, status_code, checks, error }
   if (result.error) {
     return (
       <div className="mt-4 p-3 rounded-md bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm">
@@ -15,10 +16,13 @@ export default function ScanResult({ result }) {
   return (
     <div className="mt-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
       <div className="flex items-center gap-4 mb-4">
-        <GradeBadge grade={result.scan.grade} score={result.scan.score} />
+        <GradeBadge grade={result.grade} score={result.score} />
         <div className="text-sm text-zinc-500">
           <p>
-            Scanned <span className="font-medium text-zinc-700 dark:text-zinc-300">{result.final_url}</span>
+            Scanned{" "}
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              {result.final_url}
+            </span>
           </p>
           <p>HTTP status: {result.status_code}</p>
         </div>

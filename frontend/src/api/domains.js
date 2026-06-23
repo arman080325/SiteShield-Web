@@ -12,8 +12,14 @@ export function deleteDomain(id) {
   return api.delete(`/domains/${id}`);
 }
 
-export function runScan(id) {
+export function startScan(id) {
+  // Enqueues the job, returns { task_id, status } instantly
   return api.post(`/domains/${id}/scan`);
+}
+
+export function getScanStatus(taskId) {
+  // Polls the worker: pending / running / done / failed
+  return api.get(`/domains/scan-status/${taskId}`);
 }
 
 export function listScans(id) {
