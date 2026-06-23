@@ -5,6 +5,8 @@ const GRADE_STYLES = {
   D: "bg-orange-500",
   E: "bg-orange-600",
   F: "bg-red-600",
+  "N/A": "bg-zinc-400",
+
 };
 
 export default function GradeBadge({ grade, score }) {

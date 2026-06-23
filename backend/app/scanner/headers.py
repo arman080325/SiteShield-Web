@@ -51,16 +51,29 @@ def score_to_grade(score: int) -> str:
 
 def scan_headers(url: str) -> dict:
     """Fetch a URL and grade its HTTP security headers. Returns a result dict."""
-    try:
-        response = httpx.get(
-            url,
-            follow_redirects=True,
-            timeout=10.0,
-            headers={"User-Agent": "SiteShield-Scanner/1.0"},
-        )
-    except httpx.RequestError as exc:
+    response = None
+    last_error = None
+    for attempt in range(2):  # one initial try + one retry for transient blips
+        try:
+            response = httpx.get(
+                url,
+                follow_redirects=True,
+                timeout=10.0,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; SiteShield-Scanner/1.0)"
+                },
+            )
+            break
+        except httpx.RequestError as exc:
+            last_error = exc
+            continue
+
+    if response is None:
+        # Couldn't reach the site — flag as unreachable so the scoring
+        # engine EXCLUDES this category instead of scoring it 0.
         return {
-            "error": f"Could not reach the site: {exc.__class__.__name__}",
+            "error": f"Could not reach the site: {last_error.__class__.__name__}",
+            "unreachable": True,
             "score": 0,
             "grade": "F",
             "checks": [],
@@ -86,6 +99,7 @@ def scan_headers(url: str) -> dict:
 
     return {
         "error": None,
+        "unreachable": False,
         "final_url": str(response.url),
         "status_code": response.status_code,
         "score": score,

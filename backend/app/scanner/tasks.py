@@ -5,11 +5,13 @@ from app.database import SessionLocal
 from app.models import Scan
 from app.scanner.headers import scan_headers
 from app.scanner.tls import scan_tls
+from app.scanner.dns_scan import scan_dns
 
 
-# Category weights — how much each contributes to the overall score
-HEADERS_WEIGHT = 0.6
-TLS_WEIGHT = 0.4
+# Category weights — must sum to 1.0
+HEADERS_WEIGHT = 0.40
+TLS_WEIGHT = 0.35
+DNS_WEIGHT = 0.25
 
 
 def _combined_grade(score: int) -> str:
@@ -31,25 +33,57 @@ def run_domain_scan(domain_id: int, url: str) -> dict:
     """Background task: run all scan categories, combine, and persist."""
     headers_result = scan_headers(url)
     tls_result = scan_tls(url)
+    dns_result = scan_dns(url)
 
-    # Weighted overall score (each category is already 0–100)
-    headers_score = headers_result.get("score", 0)
-    tls_score = tls_result.get("score", 0)
-    overall_score = round(headers_score * HEADERS_WEIGHT + tls_score * TLS_WEIGHT)
-    overall_grade = _combined_grade(overall_score)
+    # Each category: (score, base_weight, is_reachable)
+    categories_meta = [
+        ("headers", headers_result, HEADERS_WEIGHT),
+        ("tls", tls_result, TLS_WEIGHT),
+        ("dns", dns_result, DNS_WEIGHT),
+    ]
 
-    # Bundle the full breakdown for storage + frontend
+    # Only include categories that actually reached/measured the target.
+    # A category is "unreachable" if it explicitly flags it.
+    weighted_sum = 0.0
+    active_weight = 0.0
+    for _name, result, weight in categories_meta:
+        if result.get("unreachable"):
+            continue  # exclude from scoring — we have no measurement
+        weighted_sum += result.get("score", 0) * weight
+        active_weight += weight
+
+    # Re-normalize across only the categories we could measure
+    # if active_weight > 0:
+    #     overall_score = round(weighted_sum / active_weight)
+    # else:
+    #     overall_score = 0  # nothing was reachable at all
+    # overall_grade = _combined_grade(overall_score)
+    if active_weight > 0:
+        overall_score = round(weighted_sum / active_weight)
+        overall_grade = _combined_grade(overall_score)
+    else:
+        overall_score = 0
+        overall_grade = "N/A"
+
     full_results = {
         "headers": {
-            "score": headers_score,
+            "score": headers_result.get("score", 0),
             "checks": headers_result.get("checks", []),
             "error": headers_result.get("error"),
+            "unreachable": headers_result.get("unreachable", False),
         },
         "tls": {
-            "score": tls_score,
+            "score": tls_result.get("score", 0),
             "checks": tls_result.get("checks", []),
             "protocol": tls_result.get("protocol"),
             "error": tls_result.get("error"),
+            "unreachable": tls_result.get("unreachable", False),
+        },
+        "dns": {
+            "score": dns_result.get("score", 0),
+            "checks": dns_result.get("checks", []),
+            "error": dns_result.get("error"),
+            "unreachable": dns_result.get("unreachable", False),
         },
     }
 
@@ -74,6 +108,6 @@ def run_domain_scan(domain_id: int, url: str) -> dict:
         "score": overall_score,
         "final_url": headers_result.get("final_url"),
         "status_code": headers_result.get("status_code"),
-        "categories": full_results,  # headers + tls, each with their checks
-        "error": headers_result.get("error"),
+        "categories": full_results,
+        "error": None,
     }

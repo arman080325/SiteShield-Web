@@ -29,6 +29,7 @@ def scan_tls(url: str) -> dict:
     except (socket.gaierror, socket.timeout, ConnectionRefusedError) as exc:
         return {
             "error": f"Could not establish TLS connection: {exc.__class__.__name__}",
+            "unreachable": True,
             "score": 0,
             "checks": [],
         }
@@ -104,8 +105,9 @@ def scan_tls(url: str) -> dict:
 
     return {
         "error": None,
+        "unreachable": False,
         "host": host,
         "protocol": protocol,
-        "score": score,  # 0–100 for the TLS category
+        "score": score,
         "checks": checks,
     }
