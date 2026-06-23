@@ -2,7 +2,7 @@ import json
 
 from app.celery_app import celery_app
 from app.database import SessionLocal
-from app.models import Scan
+from app.models import Scan, Domain
 from app.scanner.headers import scan_headers
 from app.scanner.tls import scan_tls
 from app.scanner.dns_scan import scan_dns
@@ -111,3 +111,18 @@ def run_domain_scan(domain_id: int, url: str) -> dict:
         "categories": full_results,
         "error": None,
     }
+
+
+@celery_app.task(name="scheduled_scan_sweep")
+def scheduled_scan_sweep():
+    """Periodic task: enqueue a scan for every domain with monitoring enabled."""
+    db = SessionLocal()
+    try:
+        domains = db.query(Domain).filter(Domain.monitoring_enabled == True).all()
+        count = 0
+        for domain in domains:
+            run_domain_scan.delay(domain.id, domain.url)
+            count += 1
+    finally:
+        db.close()
+    return {"enqueued": count}

@@ -3,12 +3,24 @@ import { startScan } from "../api/domains";
 import { pollScanStatus } from "../api/poll";
 import ScanResult from "./ScanResult";
 import { Link } from "react-router-dom";
+import { toggleMonitoring } from "../api/domains";
 
 export default function DomainCard({ domain, onDelete }) {
   const [result, setResult] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [statusText, setStatusText] = useState(""); // "queued" | "running"
   const [error, setError] = useState(null);
+  const [monitoring, setMonitoring] = useState(domain.monitoring_enabled || false);
+
+  async function handleToggleMonitoring() {
+    const next = !monitoring;
+    setMonitoring(next); // optimistic update
+    try {
+      await toggleMonitoring(domain.id, next);
+    } catch {
+      setMonitoring(!next); // revert on failure
+    }
+  }
 
   async function handleScan() {
     setError(null);
@@ -51,6 +63,18 @@ export default function DomainCard({ domain, onDelete }) {
             </p>
           </Link>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleToggleMonitoring}
+            title={monitoring ? "Monitoring on — auto-scans on schedule" : "Monitoring off"}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium border transition ${
+              monitoring
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30"
+                : "border-zinc-300 dark:border-zinc-700 text-zinc-500"
+            }`}
+          >
+            <span className={`inline-block w-2 h-2 rounded-full ${monitoring ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
+            {monitoring ? "Monitoring" : "Monitor"}
+          </button>
           <button
             onClick={handleScan}
             disabled={scanning}

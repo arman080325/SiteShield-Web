@@ -66,4 +66,5 @@ export const api = {
   post: (path, body) => request(path, { method: "POST", body }),
   postForm: (path, form) => request(path, { method: "POST", form }),
   delete: (path) => request(path, { method: "DELETE" }),
+  patch: (path, body) => request(path, { method: "PATCH", body }),
 };

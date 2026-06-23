@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import schedule
 
 from app.config import settings
 
@@ -16,5 +17,12 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
 )
+
+celery_app.conf.beat_schedule = {
+    "periodic-domain-scan": {
+        "task": "scheduled_scan_sweep",
+        "schedule": settings.scan_interval_seconds,
+    },
+}
 
 celery_app.autodiscover_tasks(["app.scanner"])

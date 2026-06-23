@@ -78,3 +78,14 @@ class ScanDetail(BaseModel):
     score: int
     created_at: datetime
     categories: dict | None = None  # parsed from results_json
+
+class DomainOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    url: str
+    created_at: datetime
+    monitoring_enabled: bool = False
+
+class MonitoringToggle(BaseModel):
+    enabled: bool
