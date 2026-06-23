@@ -10,22 +10,32 @@ function CheckRow({ label, passed, detail, weight, advice }) {
         <p className="font-medium">{label}</p>
         <p className="text-xs text-zinc-500 break-words mt-0.5">{detail}</p>
         {!passed && advice && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{advice}</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            {advice}
+          </p>
         )}
       </div>
-      <span className="text-xs text-zinc-400 whitespace-nowrap">{weight} pts</span>
+      <span className="text-xs text-zinc-400 whitespace-nowrap">
+        {weight} pts
+      </span>
     </div>
   );
 }
 
-function CategorySection({ title, icon, score, children }) {
+function CategorySection({ title, icon, score, unreachable, children }) {
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-2">
         <h4 className="text-sm font-semibold flex items-center gap-2">
           <span>{icon}</span> {title}
         </h4>
-        <span className="text-xs text-zinc-500">{score}/100</span>
+        {unreachable ? (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+            Unreachable · not scored
+          </span>
+        ) : (
+          <span className="text-xs text-zinc-500">{score}/100</span>
+        )}
       </div>
       <div className="space-y-2">{children}</div>
     </div>
@@ -63,27 +73,80 @@ export default function ScanResult({ result }) {
 
       {/* HTTP Headers category */}
       {headers && (
-        <CategorySection title="HTTP Security Headers" icon="🛡️" score={headers.score}>
-          {headers.checks.map((c) => (
-            <CheckRow
-              key={c.header}
-              label={c.header}
-              passed={c.present}
-              detail={c.present ? c.value : "Missing"}
-              weight={c.weight}
-              advice={c.advice}
-            />
-          ))}
+        <CategorySection
+          title="HTTP Security Headers"
+          icon="🛡️"
+          score={headers.score}
+          unreachable={headers.unreachable}
+        >
+          {headers.unreachable ? (
+            <p className="text-sm text-zinc-500">
+              Could not reach the site to check headers — excluded from the
+              grade.
+            </p>
+          ) : (
+            headers.checks.map((c) => (
+              <CheckRow
+                key={c.header}
+                label={c.header}
+                passed={c.present}
+                detail={c.present ? c.value : "Missing"}
+                weight={c.weight}
+                advice={c.advice}
+              />
+            ))
+          )}
         </CategorySection>
       )}
 
-      {/* TLS/SSL category */}
+{/* TLS/SSL category */}
       {tls && (
-        <CategorySection title="TLS / SSL" icon="🔐" score={tls.score}>
-          {tls.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">{tls.error}</p>
+        <CategorySection
+          title="TLS / SSL"
+          icon="🔐"
+          score={tls.score}
+          unreachable={tls.unreachable}
+        >
+          {tls.unreachable ? (
+            <p className="text-sm text-zinc-500">
+              Could not establish a TLS connection — excluded from the grade.
+            </p>
+          ) : tls.error ? (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {tls.error}
+            </p>
           ) : (
             tls.checks.map((c) => (
+              <CheckRow
+                key={c.name}
+                label={c.name}
+                passed={c.passed}
+                detail={c.detail}
+                weight={c.weight}
+                advice={c.advice}
+              />
+            ))
+          )}
+        </CategorySection>
+      )}
+{/* DNS hygiene category */}
+      {result.categories?.dns && (
+        <CategorySection
+          title="DNS / Email Security"
+          icon="🌐"
+          score={result.categories.dns.score}
+          unreachable={result.categories.dns.unreachable}
+        >
+          {result.categories.dns.unreachable ? (
+            <p className="text-sm text-zinc-500">
+              Could not resolve the domain — excluded from the grade.
+            </p>
+          ) : result.categories.dns.error ? (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {result.categories.dns.error}
+            </p>
+          ) : (
+            result.categories.dns.checks.map((c) => (
               <CheckRow
                 key={c.name}
                 label={c.name}
