@@ -159,6 +159,32 @@ export default function ScanResult({ result }) {
           )}
         </CategorySection>
       )}
+      {/* Cookie security category */}
+      {result.categories?.cookies && (
+        <CategorySection
+          title="Cookie Security"
+          icon="🍪"
+          score={result.categories.cookies.score}
+          unreachable={result.categories.cookies.unreachable}
+        >
+          {result.categories.cookies.unreachable ? (
+            <p className="text-sm text-zinc-500">
+              Could not reach the site to check cookies — excluded from the grade.
+            </p>
+          ) : (
+            result.categories.cookies.checks.map((c) => (
+              <CheckRow
+                key={c.name}
+                label={c.name}
+                passed={c.passed}
+                detail={c.detail}
+                weight={c.weight}
+                advice={c.advice}
+              />
+            ))
+          )}
+        </CategorySection>
+      )}
     </div>
   );
 }

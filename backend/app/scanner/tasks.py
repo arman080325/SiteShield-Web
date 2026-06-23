@@ -6,13 +6,14 @@ from app.models import Scan, Domain
 from app.scanner.headers import scan_headers
 from app.scanner.tls import scan_tls
 from app.scanner.dns_scan import scan_dns
+from app.scanner.cookies import scan_cookies
 
 
 # Category weights — must sum to 1.0
-HEADERS_WEIGHT = 0.40
-TLS_WEIGHT = 0.35
-DNS_WEIGHT = 0.25
-
+HEADERS_WEIGHT = 0.35
+TLS_WEIGHT = 0.30
+DNS_WEIGHT = 0.20
+COOKIES_WEIGHT = 0.15
 
 def _combined_grade(score: int) -> str:
     if score >= 90:
@@ -34,12 +35,14 @@ def run_domain_scan(domain_id: int, url: str) -> dict:
     headers_result = scan_headers(url)
     tls_result = scan_tls(url)
     dns_result = scan_dns(url)
+    cookies_result = scan_cookies(url)
 
     # Each category: (score, base_weight, is_reachable)
     categories_meta = [
         ("headers", headers_result, HEADERS_WEIGHT),
         ("tls", tls_result, TLS_WEIGHT),
         ("dns", dns_result, DNS_WEIGHT),
+        ("cookies", cookies_result, COOKIES_WEIGHT),
     ]
 
     # Only include categories that actually reached/measured the target.
@@ -84,6 +87,12 @@ def run_domain_scan(domain_id: int, url: str) -> dict:
             "checks": dns_result.get("checks", []),
             "error": dns_result.get("error"),
             "unreachable": dns_result.get("unreachable", False),
+        },
+        "cookies": {
+            "score": cookies_result.get("score", 0),
+            "checks": cookies_result.get("checks", []),
+            "error": cookies_result.get("error"),
+            "unreachable": cookies_result.get("unreachable", False),
         },
     }
 
