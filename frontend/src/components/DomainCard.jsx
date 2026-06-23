@@ -2,6 +2,7 @@ import { useState } from "react";
 import { startScan } from "../api/domains";
 import { pollScanStatus } from "../api/poll";
 import ScanResult from "./ScanResult";
+import { Link } from "react-router-dom";
 
 export default function DomainCard({ domain, onDelete }) {
   const [result, setResult] = useState(null);
@@ -41,12 +42,14 @@ export default function DomainCard({ domain, onDelete }) {
   return (
     <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
       <div className="flex items-center justify-between">
-        <div className="min-w-0">
-          <p className="font-medium truncate">{domain.url}</p>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Added {new Date(domain.created_at + "Z").toLocaleDateString("en-GB")}
-          </p>
-        </div>
+          <Link to={`/domains/${domain.id}`} className="min-w-0 block">
+            <p className="font-medium truncate hover:text-emerald-600 transition">
+              {domain.url}
+            </p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Added {new Date(domain.created_at + "Z").toLocaleDateString("en-GB")}
+            </p>
+          </Link>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleScan}

@@ -67,3 +67,14 @@ class ScanResult(BaseModel):
     status_code: int | None = None
     checks: list[HeaderCheck]
     error: str | None = None
+
+
+class ScanDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    domain_id: int
+    grade: str
+    score: int
+    created_at: datetime
+    categories: dict | None = None  # parsed from results_json

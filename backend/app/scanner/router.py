@@ -6,10 +6,11 @@ from celery.result import AsyncResult
 
 from app.database import get_db
 from app.models import User, Domain, Scan
-from app.schemas import ScanOut
+from app.schemas import ScanOut,ScanDetail
 from app.auth.dependencies import get_current_user
 from app.scanner.tasks import run_domain_scan
 from app.celery_app import celery_app
+
 
 router = APIRouter(prefix="/domains", tags=["scans"])
 
@@ -53,7 +54,7 @@ def scan_status(
     return {"status": result.state.lower()}
 
 
-@router.get("/{domain_id}/scans", response_model=list[ScanOut])
+@router.get("/{domain_id}/scans", response_model=list[ScanDetail])
 def list_scans(
     domain_id: int,
     db: Session = Depends(get_db),
@@ -67,9 +68,34 @@ def list_scans(
     if domain is None:
         raise HTTPException(status_code=404, detail="Domain not found")
 
-    return (
+    scans = (
         db.query(Scan)
         .filter(Scan.domain_id == domain_id)
         .order_by(Scan.created_at.desc())
         .all()
     )
+
+    # Parse the stored JSON breakdown into structured categories
+    result = []
+    for scan in scans:
+        categories = None
+        try:
+            if scan.results_json:
+                parsed = json.loads(scan.results_json)
+                # Only accept the NEW multi-category shape (a dict with our keys).
+                # Old scans stored a flat list of checks — skip those gracefully.
+                if isinstance(parsed, dict) and (
+                    "headers" in parsed or "tls" in parsed or "dns" in parsed
+                ):
+                    categories = parsed
+        except (json.JSONDecodeError, TypeError):
+            categories = None
+        result.append(ScanDetail(
+            id=scan.id,
+            domain_id=scan.domain_id,
+            grade=scan.grade,
+            score=scan.score,
+            created_at=scan.created_at,
+            categories=categories,
+        ))
+    return result
