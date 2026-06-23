@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:5173"
     redis_url: str = "redis://localhost:6379/0"
+    scan_interval_seconds: int = 120  # 2 min for dev; bump to 86400 for daily
     
 
 

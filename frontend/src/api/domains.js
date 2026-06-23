@@ -29,3 +29,7 @@ export function listScans(id) {
 export function getDomain(id) {
   return api.get(`/domains/${id}`);
 }
+
+export function toggleMonitoring(id, enabled) {
+  return api.patch(`/domains/${id}/monitoring`, { enabled });
+}

@@ -30,6 +30,7 @@ class Domain(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    monitoring_enabled: Mapped[bool] = mapped_column(default=False)
 
     owner: Mapped["User"] = relationship(back_populates="domains")
     scans: Mapped[list["Scan"]] = relationship(

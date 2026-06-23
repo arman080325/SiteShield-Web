@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Domain
-from app.schemas import DomainCreate, DomainOut
+from app.schemas import DomainCreate, DomainOut, MonitoringToggle
 from app.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/domains", tags=["domains"])
@@ -76,3 +76,23 @@ def delete_domain(
     db.delete(domain)
     db.commit()
     return None
+
+@router.patch("/{domain_id}/monitoring", response_model=DomainOut)
+def toggle_monitoring(
+    domain_id: int,
+    payload: MonitoringToggle,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    domain = (
+        db.query(Domain)
+        .filter(Domain.id == domain_id, Domain.owner_id == current_user.id)
+        .first()
+    )
+    if domain is None:
+        raise HTTPException(status_code=404, detail="Domain not found")
+
+    domain.monitoring_enabled = payload.enabled
+    db.commit()
+    db.refresh(domain)
+    return domain
