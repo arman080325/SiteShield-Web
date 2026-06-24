@@ -5,6 +5,7 @@ import { pollScanStatus } from "../api/poll";
 import ScanResult from "../components/ScanResult";
 import GradeBadge from "../components/GradeBadge";
 import ScoreTrendChart from "../components/ScoreTrendChart";
+import { downloadReport } from "../api/domains";
 
 export default function DomainDetail() {
   const { id } = useParams();
@@ -15,6 +16,26 @@ export default function DomainDetail() {
   const [scanning, setScanning] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [selectedScan, setSelectedScan] = useState(null);
+
+  const [downloading, setDownloading] = useState(false);
+
+async function handleDownload() {
+    setDownloading(true);
+    const start = Date.now();
+    try {
+      await downloadReport(id, domain.url);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      // Ensure the spinner shows for at least 600ms so the feedback registers
+      const elapsed = Date.now() - start;
+      const minVisible = 600;
+      if (elapsed < minVisible) {
+        await new Promise((r) => setTimeout(r, minVisible - elapsed));
+      }
+      setDownloading(false);
+    }
+  }
 
   const loadData = useCallback(async () => {
     setError(null);
@@ -70,16 +91,35 @@ export default function DomainDetail() {
 
       <div className="flex items-center justify-between mt-3 mb-6">
         <h1 className="text-2xl font-bold truncate">{domain?.url}</h1>
-        <button
-          onClick={handleScan}
-          disabled={scanning}
-          className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium transition whitespace-nowrap"
-        >
-          {scanning ? `${statusText}…` : "Scan now"}
-        </button>
+        <div className="flex items-center justify-between mt-3 mb-6">
+          <h1 className="text-2xl font-bold truncate">{domain?.url}</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownload}
+              disabled={downloading || scans.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-50 font-medium transition whitespace-nowrap"
+            >
+              {downloading ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                "↓ Report"
+              )}
+            </button>
+            <button
+              onClick={handleScan}
+              disabled={scanning}
+              className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium transition whitespace-nowrap"
+            >
+              {scanning ? `${statusText}…` : "Scan now"}
+            </button>
+          </div>
+        </div>
       </div>
 
-    {scans.length > 1 && (
+      {scans.length > 1 && (
         <div className="mb-8 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <h2 className="text-sm font-semibold mb-4 text-zinc-500 uppercase tracking-wide">
             Score Trend
@@ -113,7 +153,9 @@ export default function DomainDetail() {
                 >
                   <GradeBadge grade={scan.grade} score={scan.score} />
                   <div className="text-sm">
-                    <p className="font-medium">{scan.grade} · {scan.score}/100</p>
+                    <p className="font-medium">
+                      {scan.grade} · {scan.score}/100
+                    </p>
                     <p className="text-xs text-zinc-500">
                       {new Date(scan.created_at + "Z").toLocaleString("en-GB")}
                     </p>
