@@ -9,22 +9,38 @@ services:
       timeout: 3s
       retries: 5
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: siteshield
+      POSTGRES_PASSWORD: siteshield_dev_pw
+      POSTGRES_DB: siteshield
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siteshield"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     dns:
       - 8.8.8.8
-      - 1.1.1.1  
+      - 1.1.1.1
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: sqlite:////app/data/siteshield.db
+      DATABASE_URL: postgresql+psycopg://siteshield:siteshield_dev_pw@postgres:5432/siteshield
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
       SCAN_INTERVAL_SECONDS: "120"
-    volumes:
-      - backend_data:/app/data
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   worker:
@@ -35,11 +51,11 @@ services:
       - 1.1.1.1
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: sqlite:////app/data/siteshield.db
-    volumes:
-      - backend_data:/app/data
+      DATABASE_URL: postgresql+psycopg://siteshield:siteshield_dev_pw@postgres:5432/siteshield
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   beat:
@@ -50,12 +66,12 @@ services:
       - 1.1.1.1
     environment:
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: sqlite:////app/data/siteshield.db
+      DATABASE_URL: postgresql+psycopg://siteshield:siteshield_dev_pw@postgres:5432/siteshield
       SCAN_INTERVAL_SECONDS: "120"
-    volumes:
-      - backend_data:/app/data
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   frontend:
@@ -69,4 +85,4 @@ services:
       - backend
 
 volumes:
-  backend_data:
+  postgres_data:

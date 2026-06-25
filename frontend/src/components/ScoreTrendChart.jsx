@@ -24,7 +24,7 @@ export default function ScoreTrendChart({ scans }) {
   const ordered = [...scans].reverse();
 
   const labels = ordered.map((s) =>
-    new Date(s.created_at + "Z").toLocaleDateString("en-GB", {
+    new Date(s.created_at).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
     })

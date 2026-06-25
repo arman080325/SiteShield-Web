@@ -157,7 +157,7 @@ async function handleDownload() {
                       {scan.grade} · {scan.score}/100
                     </p>
                     <p className="text-xs text-zinc-500">
-                      {new Date(scan.created_at + "Z").toLocaleString("en-GB")}
+                      {new Date(scan.created_at).toLocaleString("en-GB")}
                     </p>
                   </div>
                 </button>
