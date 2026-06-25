@@ -90,29 +90,61 @@ def scan_dns(url: str) -> dict:
     })
 
     # ---- CAA: restricts which CAs may issue certs for the domain ----
+    # Distinguish "queried OK, genuinely no CAA" (a real finding) from
+    # "the query itself failed" (couldn't determine — must NOT be scored
+    # as a hard fail, or we'd report false findings, e.g. in environments
+    # where the resolver can't handle CAA-type queries).
+    caa_inconclusive = False
     caa_present = False
     try:
         caa_answers = dns.resolver.resolve(domain, "CAA", lifetime=8)
         caa_present = len(caa_answers) > 0
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer,
-            dns.resolver.NoNameservers, dns.exception.Timeout):
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+        # Query succeeded; the domain genuinely has no CAA record → finding
         caa_present = False
+    except (dns.resolver.NoNameservers, dns.exception.Timeout,
+            dns.exception.DNSException):
+        # Query failed (resolver issue/timeout) → we can't determine. Don't penalize.
+        caa_inconclusive = True
+
     if caa_present:
         score += 25
-    checks.append({
-        "name": "CAA Record",
-        "passed": caa_present,
-        "detail": "CAA record present — restricts which CAs can issue certificates."
-        if caa_present else "No CAA record found.",
-        "weight": 25,
-        "advice": None if caa_present
-        else "Add a CAA record to restrict certificate issuance to specific CAs.",
-    })
+
+    if caa_inconclusive:
+        checks.append({
+            "name": "CAA Record",
+            "passed": None,
+            "inconclusive": True,
+            "detail": "Could not determine CAA record (DNS query failed) — excluded from scoring.",
+            "weight": 25,
+            "advice": None,
+        })
+    else:
+        checks.append({
+            "name": "CAA Record",
+            "passed": caa_present,
+            "detail": "CAA record present — restricts which CAs can issue certificates."
+            if caa_present else "No CAA record found.",
+            "weight": 25,
+            "advice": None if caa_present
+            else "Add a CAA record to restrict certificate issuance to specific CAs.",
+        })
+
+    # Re-normalize: exclude any inconclusive checks from the denominator,
+    # so a check we couldn't measure doesn't unfairly cap the category score.
+    # (Same principle as the category-level re-normalization, applied per-check.)
+    scored_weight = sum(
+        c["weight"] for c in checks if c.get("passed") is not None
+    )
+    if scored_weight > 0:
+        normalized_score = round(score / scored_weight * 100)
+    else:
+        normalized_score = 0
 
     return {
         "error": None,
         "unreachable": False,
         "domain": domain,
-        "score": score,
+        "score": normalized_score,
         "checks": checks,
     }
