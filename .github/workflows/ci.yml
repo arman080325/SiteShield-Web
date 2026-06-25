@@ -1,0 +1,49 @@
+name: CI
+
+# Run on every push and every pull request to main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repo's code onto the runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install the Python version we develop against
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # 3. Cache pip downloads so installs are fast on repeat runs
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      # 4. Install backend dependencies
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 5. Run the test suite
+      - name: Run pytest
+        working-directory: backend
+        env:
+          # Tests use their own in-memory DB, but config needs these to load
+          JWT_SECRET: test-secret-not-real
+          DATABASE_URL: sqlite:///./test.db
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest -v
