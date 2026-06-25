@@ -59,7 +59,7 @@ export default function DomainCard({ domain, onDelete }) {
               {domain.url}
             </p>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Added {new Date(domain.created_at + "Z").toLocaleDateString("en-GB")}
+              Added {new Date(domain.created_at).toLocaleDateString("en-GB")}
             </p>
           </Link>
         <div className="flex items-center gap-2 shrink-0">
