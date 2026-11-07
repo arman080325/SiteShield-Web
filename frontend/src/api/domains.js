@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, getToken, BASE_URL } from "./client";
 
 export function listDomains() {
   return api.get("/domains");
@@ -33,10 +33,6 @@ export function getDomain(id) {
 export function toggleMonitoring(id, enabled) {
   return api.patch(`/domains/${id}/monitoring`, { enabled });
 }
-
-import { getToken } from "./client";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export async function downloadReport(id, domainUrl) {
   const res = await fetch(`${BASE_URL}/domains/${id}/report`, {
