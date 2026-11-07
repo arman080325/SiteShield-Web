@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { listDomains, addDomain, deleteDomain } from "../api/domains";
 import AddDomainForm from "../components/AddDomainForm";
 import DomainCard from "../components/DomainCard";
