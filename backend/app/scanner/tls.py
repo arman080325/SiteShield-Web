@@ -66,6 +66,7 @@ def scan_tls(url: str) -> dict:
     # ---- Check 2: Certificate expiry ----
     not_after = cert.get("notAfter")
     expiry_passed = False
+    expiry_partial = False
     expiry_detail = "Could not read certificate expiry."
     if not_after:
         expiry_dt = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z").replace(
@@ -77,6 +78,7 @@ def scan_tls(url: str) -> dict:
             expiry_detail = f"Certificate valid for {days_left} more days."
             score += 30
         elif days_left > 0:
+            expiry_partial = True
             expiry_detail = f"Certificate expires soon — only {days_left} days left."
             score += 15  # partial credit; it's valid but worryingly close
         else:
@@ -84,6 +86,7 @@ def scan_tls(url: str) -> dict:
     checks.append({
         "name": "Certificate Expiry",
         "passed": expiry_passed,
+        "partial": expiry_partial,
         "detail": expiry_detail,
         "weight": 30,
         "advice": None if expiry_passed else "Renew the certificate well before expiry.",
