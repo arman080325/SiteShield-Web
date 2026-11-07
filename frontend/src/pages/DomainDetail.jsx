@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getDomain, listScans, startScan } from "../api/domains";
+import { getDomain, listScans, startScan, downloadReport } from "../api/domains";
 import { pollScanStatus } from "../api/poll";
 import ScanResult from "../components/ScanResult";
 import GradeBadge from "../components/GradeBadge";
 import ScoreTrendChart from "../components/ScoreTrendChart";
-import { downloadReport } from "../api/domains";
 
 export default function DomainDetail() {
   const { id } = useParams();
@@ -16,10 +15,9 @@ export default function DomainDetail() {
   const [scanning, setScanning] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [selectedScan, setSelectedScan] = useState(null);
-
   const [downloading, setDownloading] = useState(false);
 
-async function handleDownload() {
+  async function handleDownload() {
     setDownloading(true);
     const start = Date.now();
     try {
@@ -38,12 +36,12 @@ async function handleDownload() {
   }
 
   const loadData = useCallback(async () => {
-    setError(null);
     try {
       const [domainData, scansData] = await Promise.all([
         getDomain(id),
         listScans(id),
       ]);
+      setError(null);
       setDomain(domainData);
       setScans(scansData);
       setSelectedScan(scansData[0] || null); // default to most recent
@@ -55,8 +53,34 @@ async function handleDownload() {
   }, [id]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let ignore = false;
+    async function fetchData() {
+      try {
+        const [domainData, scansData] = await Promise.all([
+          getDomain(id),
+          listScans(id),
+        ]);
+        if (!ignore) {
+          setError(null);
+          setDomain(domainData);
+          setScans(scansData);
+          setSelectedScan(scansData[0] || null);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    fetchData();
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   async function handleScan() {
     setScanning(true);
@@ -91,31 +115,28 @@ async function handleDownload() {
 
       <div className="flex items-center justify-between mt-3 mb-6">
         <h1 className="text-2xl font-bold truncate">{domain?.url}</h1>
-        <div className="flex items-center justify-between mt-3 mb-6">
-          <h1 className="text-2xl font-bold truncate">{domain?.url}</h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownload}
-              disabled={downloading || scans.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-50 font-medium transition whitespace-nowrap"
-            >
-              {downloading ? (
-                <>
-                  <span className="inline-block w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  Generating…
-                </>
-              ) : (
-                "↓ Report"
-              )}
-            </button>
-            <button
-              onClick={handleScan}
-              disabled={scanning}
-              className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium transition whitespace-nowrap"
-            >
-              {scanning ? `${statusText}…` : "Scan now"}
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownload}
+            disabled={downloading || scans.length === 0}
+            className="flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:opacity-50 font-medium transition whitespace-nowrap"
+          >
+            {downloading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                Generating…
+              </>
+            ) : (
+              "↓ Report"
+            )}
+          </button>
+          <button
+            onClick={handleScan}
+            disabled={scanning}
+            className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium transition whitespace-nowrap"
+          >
+            {scanning ? `${statusText}…` : "Scan now"}
+          </button>
         </div>
       </div>
 
@@ -141,45 +162,41 @@ async function handleDownload() {
               Scan History
             </h2>
             <div className="space-y-2">
-              {scans.map((scan) => (
-                <button
-                  key={scan.id}
-                  onClick={() => setSelectedScan(scan)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition ${
-                    selectedScan?.id === scan.id
-                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                      : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  <GradeBadge grade={scan.grade} score={scan.score} />
-                  <div className="text-sm">
-                    <p className="font-medium">
-                      {scan.grade} · {scan.score}/100
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {new Date(scan.created_at).toLocaleString("en-GB")}
-                    </p>
-                  </div>
-                </button>
-              ))}
+              {scans.map((s) => {
+                const isSelected = selectedScan?.id === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedScan(s)}
+                    className={`w-full text-left p-3 rounded-lg border transition flex items-center justify-between ${
+                      isSelected
+                        ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                        : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">
+                        {new Date(s.created_at).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Score: {s.score}/100
+                      </p>
+                    </div>
+                    <GradeBadge grade={s.grade} score={s.score} size="sm" />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Selected scan detail — right column */}
+          {/* Scan detail — right 2 columns */}
           <div className="md:col-span-2">
             <h2 className="text-sm font-semibold mb-3 text-zinc-500 uppercase tracking-wide">
-              Scan Details
+              Selected Scan Details
             </h2>
-            {selectedScan && (
-              <ScanResult
-                result={{
-                  grade: selectedScan.grade,
-                  score: selectedScan.score,
-                  final_url: domain?.url,
-                  categories: selectedScan.categories,
-                }}
-              />
-            )}
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+              <ScanResult result={selectedScan} />
+            </div>
           </div>
         </div>
       )}
