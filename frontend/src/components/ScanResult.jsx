@@ -1,13 +1,41 @@
 import GradeBadge from "./GradeBadge";
 
-function CheckRow({ label, passed, detail, weight, advice }) {
+function CheckRow({ label, passed, partial, detail, weight, advice }) {
+  let icon = "✗";
+  let colorClass = "text-red-500 font-bold";
+  let statusBadge = null;
+
+  if (passed === null || passed === undefined) {
+    icon = "–";
+    colorClass = "text-zinc-400 dark:text-zinc-500 font-bold";
+    statusBadge = (
+      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+        Not scored
+      </span>
+    );
+  } else if (partial) {
+    icon = "!";
+    colorClass = "text-amber-500 font-bold";
+    statusBadge = (
+      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300">
+        Partial
+      </span>
+    );
+  } else if (passed) {
+    icon = "✓";
+    colorClass = "text-emerald-500 font-bold";
+  }
+
   return (
     <div className="flex items-start gap-3 text-sm p-2 rounded-md bg-zinc-50 dark:bg-zinc-800/50">
-      <span className={passed ? "text-emerald-500" : "text-red-500"}>
-        {passed ? "✓" : "✗"}
+      <span className={`w-4 text-center ${colorClass}`}>
+        {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{label}</p>
+          {statusBadge}
+        </div>
         <p className="text-xs text-zinc-500 break-words mt-0.5">{detail}</p>
         {!passed && advice && (
           <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
@@ -90,6 +118,7 @@ export default function ScanResult({ result }) {
                 key={c.header}
                 label={c.header}
                 passed={c.present}
+                partial={c.partial}
                 detail={c.present ? c.value : "Missing"}
                 weight={c.weight}
                 advice={c.advice}
@@ -99,7 +128,7 @@ export default function ScanResult({ result }) {
         </CategorySection>
       )}
 
-{/* TLS/SSL category */}
+      {/* TLS/SSL category */}
       {tls && (
         <CategorySection
           title="TLS / SSL"
@@ -121,6 +150,7 @@ export default function ScanResult({ result }) {
                 key={c.name}
                 label={c.name}
                 passed={c.passed}
+                partial={c.partial}
                 detail={c.detail}
                 weight={c.weight}
                 advice={c.advice}
@@ -129,7 +159,8 @@ export default function ScanResult({ result }) {
           )}
         </CategorySection>
       )}
-{/* DNS hygiene category */}
+
+      {/* DNS hygiene category */}
       {result.categories?.dns && (
         <CategorySection
           title="DNS / Email Security"
@@ -151,6 +182,7 @@ export default function ScanResult({ result }) {
                 key={c.name}
                 label={c.name}
                 passed={c.passed}
+                partial={c.partial}
                 detail={c.detail}
                 weight={c.weight}
                 advice={c.advice}
@@ -159,6 +191,7 @@ export default function ScanResult({ result }) {
           )}
         </CategorySection>
       )}
+
       {/* Cookie security category */}
       {result.categories?.cookies && (
         <CategorySection
@@ -177,6 +210,7 @@ export default function ScanResult({ result }) {
                 key={c.name}
                 label={c.name}
                 passed={c.passed}
+                partial={c.partial}
                 detail={c.detail}
                 weight={c.weight}
                 advice={c.advice}

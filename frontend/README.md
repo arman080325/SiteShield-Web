@@ -1,16 +1,42 @@
-# React + Vite
+# SiteShield Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React frontend for the SiteShield website security monitoring platform.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: React 19 + Vite
+- **Styling**: Tailwind CSS
+- **Routing**: React Router DOM v7
+- **Charts**: Chart.js (`react-chartjs-2`)
+- **Icons & Badges**: Custom SVG & Tailwind components
 
-## React Compiler
+## Development Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 20+ (or Node 22 LTS)
+- npm 10+
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Installation & Run
+
+```bash
+# Install dependencies cleanly
+npm ci
+
+# Start the Vite development server (default http://localhost:5173)
+npm run dev
+
+# Run lint checks
+npm run lint
+
+# Build production bundle
+npm run build
+```
+
+## Environment Variables
+
+Configure `.env` or set in environment:
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_API_URL` | `http://127.0.0.1:8000` | Backend API base URL |

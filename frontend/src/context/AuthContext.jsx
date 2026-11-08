@@ -1,15 +1,13 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getToken, setToken, clearToken } from "../api/client";
 import { login as apiLogin, signup as apiSignup, getMe } from "../api/auth";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./useAuth";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // On app load: if a token exists, verify it by fetching the current user
-// On app load: if a token exists, verify it by fetching the current user
   useEffect(() => {
     async function restoreSession() {
       const token = getToken();
@@ -57,11 +55,4 @@ export function AuthProvider({ children }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// Convenience hook so components just call useAuth()
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

@@ -82,7 +82,7 @@ cd backend
 python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # macOS / Linux
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 API docs available at `http://127.0.0.1:8000/docs`.
@@ -90,14 +90,59 @@ API docs available at `http://127.0.0.1:8000/docs`.
 ### Frontend
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
+```
+
+---
+
+### 🛠️ Common Commands
+
+Cross-platform development and test commands:
+
+#### Using `make` (macOS / Linux / WSL):
+```bash
+make dev     # Start stack with Docker Compose
+make test    # Run backend and frontend test suites
+make lint    # Run backend ruff check and frontend eslint
+make fmt     # Format backend code with ruff
+```
+
+#### Using PowerShell (Windows):
+```powershell
+# Development stack
+docker compose up --build
+
+# Run backend tests
+cd backend; .\venv\Scripts\pytest -v
+
+# Run frontend lint & build
+cd frontend; npm run lint; npm run build
+
+# Backend lint & format
+cd backend; .\venv\Scripts\ruff check .; .\venv\Scripts\ruff format .
+```
+
+#### Using Bash (macOS / Linux):
+```bash
+# Development stack
+docker compose up --build
+
+# Run backend tests
+cd backend && pytest -v
+
+# Run frontend lint & build
+cd frontend && npm run lint && npm run build
+
+# Backend lint & format
+cd backend && ruff check . && ruff format .
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
+- [x] **Repo hygiene & quickfixes** — UTF-8 requirements split, ReportLab XML escaping, tri-state check display, clean schemas
 - [ ] **Core & Auth** — JWT signup/login, domain CRUD, first synchronous header scan, React dashboard
 - [ ] **Async scanning** — background workers, TLS + cookie + DNS checks, scoring engine
 - [ ] **Monitoring** — scheduled re-scans, history charts, PDF reports, email alerts

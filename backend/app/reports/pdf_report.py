@@ -1,12 +1,12 @@
 import io
-import json
-from datetime import datetime
+from datetime import datetime, timezone
+from xml.sax.saxutils import escape as xml_escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Flowable,
 )
@@ -35,6 +35,13 @@ BORDER = colors.HexColor("#e2e8f0")
 GREEN = colors.HexColor("#15803d")
 RED = colors.HexColor("#b91c1c")
 AMBER = colors.HexColor("#b45309")
+
+
+def _safe_xml(val) -> str:
+    """Escape arbitrary text for safe insertion into ReportLab Paragraph."""
+    if val is None:
+        return ""
+    return xml_escape(str(val))
 
 
 class ScoreBar(Flowable):
@@ -95,8 +102,8 @@ def _fmt_date(iso_str):
     if not iso_str:
         return "—"
     try:
-        dt = datetime.fromisoformat(str(iso_str).replace("Z", ""))
-        return dt.strftime("%d %b %Y, %H:%M")
+        dt = datetime.fromisoformat(str(iso_str).replace("Z", "+00:00"))
+        return dt.strftime("%d %b %Y, %H:%M UTC")
     except (ValueError, TypeError):
         return str(iso_str)
 
@@ -113,11 +120,11 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
     story = []
     content_w = doc.width
 
-    # ---- Header band (full-width dark) ----
+    # ---- Header band (full-width dark, no unrenderable emoji) ----
     header_inner = Table(
-        [[Paragraph("&#128737; SiteShield Security Report", styles["H1"])],
-         [Paragraph(domain_url, styles["HSub"])],
-         [Paragraph(f"Generated {datetime.utcnow().strftime('%d %b %Y, %H:%M UTC')}",
+        [[Paragraph("SiteShield Security Report", styles["H1"])],
+         [Paragraph(_safe_xml(domain_url), styles["HSub"])],
+         [Paragraph(f"Generated {datetime.now(timezone.utc).strftime('%d %b %Y, %H:%M UTC')}",
                     styles["HSub"])]],
         colWidths=[content_w + 32 * mm],
     )
@@ -143,11 +150,10 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
     grade_color = GRADE_COLORS.get(grade, colors.HexColor("#9ca3af"))
 
     # ---- Grade badge + summary stats strip ----
-    grades_only = [s.get("grade") for s in scans]
     best = max((s.get("score", 0) for s in scans), default=0)
 
     badge_cell = Table([[Paragraph(
-        f'<font color="white" size="30"><b>{grade}</b></font>', styles["Stat"])]],
+        f'<font color="white" size="30"><b>{_safe_xml(grade)}</b></font>', styles["Stat"])]],
         colWidths=[26 * mm], rowHeights=[26 * mm])
     badge_cell.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), grade_color),
@@ -157,8 +163,8 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
     ]))
 
     def stat(value, label):
-        return Table([[Paragraph(str(value), styles["Stat"])],
-                      [Paragraph(label, styles["StatLabel"])]])
+        return Table([[Paragraph(_safe_xml(str(value)), styles["Stat"])],
+                      [Paragraph(_safe_xml(label), styles["StatLabel"])]])
 
     summary = Table([[
         badge_cell,
@@ -176,7 +182,7 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
     ]))
     story.append(summary)
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"Latest scan: {_fmt_date(latest.get('created_at'))}",
+    story.append(Paragraph(f"Latest scan: {_safe_xml(_fmt_date(latest.get('created_at')))}",
                            styles["Sub"]))
 
     # ---- Category breakdown ----
@@ -193,14 +199,14 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
             # Category header row: title + score bar + score
             if unreachable:
                 header_row = Table([[
-                    Paragraph(label, styles["CatTitle"]),
+                    Paragraph(_safe_xml(label), styles["CatTitle"]),
                     Paragraph("Unreachable — not scored", styles["Sub"]),
                 ]], colWidths=[content_w * 0.5, content_w * 0.5])
             else:
                 header_row = Table([[
-                    Paragraph(label, styles["CatTitle"]),
+                    Paragraph(_safe_xml(label), styles["CatTitle"]),
                     ScoreBar(cat_score, width=content_w * 0.30, color=accent),
-                    Paragraph(f"<b>{cat_score}/100</b>", styles["CheckName"]),
+                    Paragraph(f"<b>{_safe_xml(cat_score)}/100</b>", styles["CheckName"]),
                 ]], colWidths=[content_w * 0.45, content_w * 0.35, content_w * 0.20])
             header_row.setStyle(TableStyle([
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -217,20 +223,20 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
                 name = check.get("name", check.get("header", "Check"))
                 detail = _truncate(check.get("detail") or check.get("value") or "")
                 mark = "PASS" if passed else "FAIL"
-                mark_color = GREEN if passed else RED
+                mark_color = "#15803d" if passed else "#b91c1c"
                 advice = check.get("advice")
 
-                left = [Paragraph(name, styles["CheckName"])]
+                left = [Paragraph(_safe_xml(name), styles["CheckName"])]
                 if detail:
-                    left.append(Paragraph(detail, styles["CheckDetail"]))
+                    left.append(Paragraph(_safe_xml(detail), styles["CheckDetail"]))
                 if not passed and advice:
-                    left.append(Paragraph(f"&#8594; {advice}", styles["Advice"]))
+                    left.append(Paragraph(f"&#8594; {_safe_xml(advice)}", styles["Advice"]))
 
                 check_rows.append([
-                    Paragraph(f'<font color="{"#15803d" if passed else "#b91c1c"}"><b>{mark}</b></font>',
+                    Paragraph(f'<font color="{mark_color}"><b>{mark}</b></font>',
                               styles["CheckDetail"]),
                     left,
-                    Paragraph(f'{check.get("weight", "")} pts' if check.get("weight") else "",
+                    Paragraph(_safe_xml(f'{check.get("weight", "")} pts' if check.get("weight") else ""),
                               styles["CheckDetail"]),
                 ])
             if check_rows:
@@ -249,8 +255,11 @@ def generate_domain_report(domain_url: str, scans: list[dict]) -> bytes:
     story.append(Paragraph("Scan History", styles["SectionHead"]))
     rows = [["Date", "Grade", "Score"]]
     for s in scans:
-        rows.append([_fmt_date(s.get("created_at")),
-                     s.get("grade", "N/A"), f"{s.get('score', 0)}/100"])
+        rows.append([
+            Paragraph(_safe_xml(_fmt_date(s.get("created_at"))), styles["CheckDetail"]),
+            Paragraph(_safe_xml(s.get("grade", "N/A")), styles["CheckDetail"]),
+            Paragraph(_safe_xml(f"{s.get('score', 0)}/100"), styles["CheckDetail"]),
+        ])
     table = Table(rows, colWidths=[content_w * 0.5, content_w * 0.25, content_w * 0.25])
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), INK),

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -33,7 +34,7 @@ class DomainCreate(BaseModel):
         if not v.startswith(("http://", "https://")):
             v = "https://" + v
         return v.rstrip("/")
-    
+
 
 class DomainOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -41,14 +42,11 @@ class DomainOut(BaseModel):
     id: int
     url: str
     created_at: datetime
+    monitoring_enabled: bool = False
 
 
-class HeaderCheck(BaseModel):
-    header: str
-    present: bool
-    value: str | None = None
-    weight: int
-    advice: str | None = None
+class MonitoringToggle(BaseModel):
+    enabled: bool
 
 
 class ScanOut(BaseModel):
@@ -61,14 +59,6 @@ class ScanOut(BaseModel):
     created_at: datetime
 
 
-class ScanResult(BaseModel):
-    scan: ScanOut
-    final_url: str | None = None
-    status_code: int | None = None
-    checks: list[HeaderCheck]
-    error: str | None = None
-
-
 class ScanDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -78,14 +68,3 @@ class ScanDetail(BaseModel):
     score: int
     created_at: datetime
     categories: dict | None = None  # parsed from results_json
-
-class DomainOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    url: str
-    created_at: datetime
-    monitoring_enabled: bool = False
-
-class MonitoringToggle(BaseModel):
-    enabled: bool
