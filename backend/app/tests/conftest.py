@@ -38,6 +38,21 @@ def fresh_db():
 
 
 @pytest.fixture(autouse=True)
+def reset_rate_limits():
+    """Reset SlowAPI in-memory storage before and after each test."""
+    from app.core.ratelimit import limiter
+    try:
+        limiter._storage.storage.clear()
+    except Exception:
+        pass
+    yield
+    try:
+        limiter._storage.storage.clear()
+    except Exception:
+        pass
+
+
+@pytest.fixture(autouse=True)
 def fake_getaddrinfo_default(monkeypatch):
     """
     Fake socket.getaddrinfo by default so all tests stay offline.

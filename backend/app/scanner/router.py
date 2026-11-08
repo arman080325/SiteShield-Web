@@ -3,10 +3,11 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.core.ratelimit import get_user_or_ip, limiter
 from app.core.redis_client import get_redis_client
 from app.database import get_db
 from app.models import Domain, Scan, ScanJob, ScanOptOut, User
@@ -18,7 +19,10 @@ router = APIRouter(prefix="/domains", tags=["scans"])
 
 
 @router.post("/{domain_id}/scan", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit("30/hour", key_func=get_user_or_ip)
 def start_scan(
+    request: Request,
+    response: Response,
     domain_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
