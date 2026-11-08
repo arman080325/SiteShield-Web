@@ -33,6 +33,7 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     environment:
+      RUN_MIGRATIONS: "1"
       REDIS_URL: redis://redis:6379/0
       DATABASE_URL: postgresql+psycopg://siteshield:siteshield_dev_pw@postgres:5432/siteshield
       CORS_ORIGINS: http://localhost:5173,http://localhost:8080
