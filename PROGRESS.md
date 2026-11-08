@@ -34,6 +34,7 @@
 - [📅 Month 1 — Foundation → Dashboard](#-month-1--foundation--auth--crud--scanner--dashboard)
 - [📅 Month 2 — Async + Multi-Category Scanning](#-month-2--async--multi-category-scanning)
 - [📅 Month 3 — Monitoring, History & Trends](#-month-3--monitoring-history--trends)
+- [📅 Month 4 — Production Track & Hardening](#-month-4--production-track--hardening)
 - [⏭️ Roadmap](#️-roadmap)
 - [🔁 Git Workflow](#-git-workflow)
 - [🎯 Interview Framing](#-why-this-project-matters-interview-framing)
@@ -561,6 +562,52 @@ Chart.js line graph (via `react-chartjs-2`) plotting **score over time** across 
 > 🔧 **Note:** an already-open detail page doesn't live-refresh; reload to see new scheduled scans (no polling/websockets on that view yet — by design).
 
 ---
+
+---
+
+## 📅 Month 4 — Production Track & Hardening
+
+### 🧼 Phase 0 — Repository Hygiene & Quick Fixes (2026-11-08)
+
+Implemented all hygiene fixes, removed development detritus, and eliminated known quick bugs:
+
+- **Requirements separation & cleanup (C-5, H-7):**
+  - Converted `backend/requirements.txt` from UTF-16 LE with BOM to standard UTF-8 LF.
+  - Split developer dependencies (`pytest`, `pytest-cov`, `pytest-mock`, `ruff`, `flake8`) out into `backend/requirements-dev.txt`.
+  - Updated `.github/workflows/ci.yml` to install `requirements-dev.txt`.
+  - Verified runtime requirements completeness: standalone virtualenv with only `requirements.txt` imports cleanly, Docker containers build and start with no missing packages.
+
+- **Git & cache cleanup (H-8, M-8):**
+  - Untracked committed artifacts: `backend/celerybeat-schedule` and `frontend/.vite`.
+  - Added ignore rules to `.gitignore` for `celerybeat-schedule*`, `.vite/`, `dist/`, and local scratch files.
+
+- **Frontend template cleanup & branding (H-6 interim, M-1, M-11):**
+  - Deleted unused Vite starter templates and assets (`App.css`, `react.svg`, `vite.svg`, `hero.png`, `icons.svg`).
+  - Added dedicated custom SVG shield favicon (`favicon.svg`), updated `index.html` title to "SiteShield — Website Security Posture Scanner", added description meta tag.
+  - Resolved `DomainDetail.jsx` duplicate title and action bar headers.
+  - Fixed React 19 / Vite ESLint errors cleanly:
+    - Extracted `useAuth` into `frontend/src/context/useAuth.js` to satisfy `react-refresh/only-export-components`.
+    - Refactored `DomainDetail.jsx` data fetching to prevent `react-hooks/set-state-in-effect`.
+    - `npm run lint` now exits 0 cleanly with zero errors/warnings.
+  - Exported `BASE_URL` from `frontend/src/api/client.js` and cleaned up `domains.js` imports.
+
+- **PDF report XML escaping & modernization (M-2):**
+  - Replaced manual single-quote escaping with standard `xml.sax.saxutils.escape` across all dynamic data (domain URL, headers, check names, check details, DNS records, advice).
+  - Modernized UTC datetime calls to `datetime.now(timezone.utc)` (Python 3.12+ compliant).
+  - Replaced unsupported Unicode emoji in PDF templates with clean ASCII labels.
+  - Added comprehensive test suite `test_reports.py` testing hostile markup (`<script>`, `<b`, `&`, `&amp;`), empty scans (`scans=[]`), and legacy scans (`categories=None`).
+
+- **Scanner partial scoring & tri-state display (Audit 0.6):**
+  - Added `"partial": True` to TLS certificate expiration check (`0 < days_left <= 30`), while keeping `"passed": False` to preserve strict scoring invariance.
+  - Updated `ScanResult.jsx` `CheckRow` to visually distinguish all four states:
+    - Pass (`✓` emerald green)
+    - Partial (`!` amber with `Partial` badge)
+    - Fail (`✗` red)
+    - Inconclusive (`–` zinc grey with `Not scored` badge)
+
+- **Developer tooling & configuration:**
+  - Added `.editorconfig`, `Makefile`, and `backend/pyproject.toml`.
+  - Added comprehensive "Common commands" section in `README.md` with side-by-side PowerShell and Bash instructions.
 
 ## ⏭️ Roadmap
 
