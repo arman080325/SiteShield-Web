@@ -86,10 +86,17 @@ export default function DomainDetail() {
     setScanning(true);
     setStatusText("queued");
     try {
-      const { task_id } = await startScan(id);
-      const final = await pollScanStatus(task_id, (s) => setStatusText(s));
+      const res = await startScan(id);
+      const jobId = res.job_id || res.task_id;
+      if (res.cached || res.status === "succeeded") {
+        await loadData();
+        return;
+      }
+      const final = await pollScanStatus(jobId, (s) => setStatusText(s));
       if (final.status === "done") {
         await loadData(); // refresh history with the new scan
+      } else {
+        setError(final.error || "Scan failed.");
       }
     } catch (err) {
       setError(err.message);

@@ -13,14 +13,17 @@ export function deleteDomain(id) {
 }
 
 export function startScan(id) {
-  // Enqueues the job, returns { task_id, status } instantly
+  // Enqueues the job, returns { job_id, status }
   return api.post(`/domains/${id}/scan`);
 }
 
-export function getScanStatus(taskId) {
-  // Polls the worker: pending / running / done / failed
-  return api.get(`/domains/scan-status/${taskId}`);
+export function getScanJob(jobId) {
+  // Polls the scan job row: queued / running / succeeded / failed
+  return api.get(`/domains/scan-jobs/${jobId}`);
 }
+
+// Keep getScanStatus as alias for backwards compatibility
+export const getScanStatus = getScanJob;
 
 export function listScans(id) {
   return api.get(`/domains/${id}/scans`);
