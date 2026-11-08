@@ -1,4 +1,5 @@
-import httpx
+from app.scanner.net.http_fetch import FetchResult, fetch_target
+from app.scanner.net.ssrf_guard import UnsafeTargetError
 
 # Each header: weight (points) and a short explanation shown in results.
 SECURITY_HEADERS = {
@@ -49,38 +50,31 @@ def score_to_grade(score: int) -> str:
     return "F"
 
 
-def scan_headers(url: str) -> dict:
+def scan_headers(url: str, fetch_result: FetchResult | None = None) -> dict:
     """Fetch a URL and grade its HTTP security headers. Returns a result dict."""
-    response = None
-    last_error = None
-    for attempt in range(2):  # one initial try + one retry for transient blips
+    if fetch_result is None:
         try:
-            response = httpx.get(
-                url,
-                follow_redirects=True,
-                timeout=10.0,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; SiteShield-Scanner/1.0)"
-                },
-            )
-            break
-        except httpx.RequestError as exc:
-            last_error = exc
-            continue
+            fetch_result = fetch_target(url)
+        except UnsafeTargetError as exc:
+            return {
+                "error": f"SSRF blocked: {exc}",
+                "unreachable": True,
+                "score": 0,
+                "grade": "F",
+                "checks": [],
+            }
 
-    if response is None:
-        # Couldn't reach the site — flag as unreachable so the scoring
-        # engine EXCLUDES this category instead of scoring it 0.
+    if fetch_result.unreachable:
         return {
-            "error": f"Could not reach the site: {last_error.__class__.__name__}",
+            "error": fetch_result.error or "Could not reach target",
             "unreachable": True,
             "score": 0,
             "grade": "F",
             "checks": [],
         }
 
-    # httpx header lookups are case-insensitive
-    present_headers = response.headers
+    # Header lookups (case-insensitive)
+    present_headers = {k.lower(): v for k, v in fetch_result.headers.items()}
 
     checks = []
     score = 0
@@ -100,8 +94,7 @@ def scan_headers(url: str) -> dict:
     return {
         "error": None,
         "unreachable": False,
-        "final_url": str(response.url),
-        "status_code": response.status_code,
+        "url": fetch_result.final_url,
         "score": score,
         "grade": score_to_grade(score),
         "checks": checks,
