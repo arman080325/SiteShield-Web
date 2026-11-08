@@ -188,7 +188,7 @@ def test_peer_ip_rejected_when_private(monkeypatch):
 
 
 # -----------------------------------------------------------------------------
-# TLS Scanner SSRF Protection
+# TLS, Headers, and Cookies Scanner SSRF Protection
 # -----------------------------------------------------------------------------
 
 def test_scan_tls_blocks_ssrf_target():
@@ -196,6 +196,52 @@ def test_scan_tls_blocks_ssrf_target():
     assert res["unreachable"] is True
     assert "SSRF blocked" in res["error"]
     assert res["score"] == 0
+
+
+@respx.mock
+def test_headers_scanner_ssrf_guarded(monkeypatch):
+    """When target resolves to 127.0.0.1, scan_headers blocks before network request."""
+    from app.scanner.headers import scan_headers
+
+    def fake_getaddrinfo(host, port, *args, **kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", int(port)))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+
+    route = respx.get("http://evil-headers.example.com").mock(
+        return_value=httpx.Response(200, text="Should never be reached")
+    )
+
+    res = scan_headers("http://evil-headers.example.com")
+    assert res["unreachable"] is True
+    assert res["score"] == 0
+    assert "SSRF blocked" in res["error"]
+    assert len(res["checks"]) == 0
+    # Prove no request was sent
+    assert route.call_count == 0
+
+
+@respx.mock
+def test_cookies_scanner_ssrf_guarded(monkeypatch):
+    """When target resolves to 127.0.0.1, scan_cookies blocks before network request."""
+    from app.scanner.cookies import scan_cookies
+
+    def fake_getaddrinfo(host, port, *args, **kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", int(port)))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+
+    route = respx.get("http://evil-cookies.example.com").mock(
+        return_value=httpx.Response(200, text="Should never be reached")
+    )
+
+    res = scan_cookies("http://evil-cookies.example.com")
+    assert res["unreachable"] is True
+    assert res["score"] == 0
+    assert "SSRF blocked" in res["error"]
+    assert len(res["checks"]) == 0
+    # Prove no request was sent
+    assert route.call_count == 0
 
 
 # -----------------------------------------------------------------------------

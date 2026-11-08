@@ -2,32 +2,29 @@
 for the scoring logic itself."""
 
 from app.scanner.cookies import scan_cookies
+from app.scanner.net.http_fetch import FetchResult
 
 
-def test_cookies_no_cookies_is_full_score(monkeypatch):
+def test_cookies_no_cookies_is_full_score():
     """A site that sets no cookies has no cookie-risk surface → 100."""
-    class FakeResponse:
-        headers = type("H", (), {"get_list": lambda self, k: []})()
-
-    import app.scanner.cookies as cookies_mod
-    monkeypatch.setattr(cookies_mod.httpx, "get", lambda *a, **k: FakeResponse())
-
-    result = scan_cookies("https://example.com")
+    fetch_res = FetchResult(
+        final_url="https://example.com",
+        status_code=200,
+        cookies=[],
+    )
+    result = scan_cookies("https://example.com", fetch_result=fetch_res)
     assert result["score"] == 100
     assert result["unreachable"] is False
 
 
-def test_cookies_unreachable_flag(monkeypatch):
+def test_cookies_unreachable_flag():
     """A site we can't reach is flagged unreachable, not scored 0 as a finding."""
-    import app.scanner.cookies as cookies_mod
-    import httpx
-
-    def boom(*a, **k):
-        raise httpx.RequestError("nope")
-
-    monkeypatch.setattr(cookies_mod.httpx, "get", boom)
-
-    result = scan_cookies("https://unreachable.invalid")
+    fetch_res = FetchResult(
+        final_url="https://unreachable.invalid",
+        unreachable=True,
+        error="Could not reach the site: RequestError",
+    )
+    result = scan_cookies("https://unreachable.invalid", fetch_result=fetch_res)
     assert result["unreachable"] is True
     assert result["score"] == 0
 

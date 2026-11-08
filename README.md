@@ -140,6 +140,29 @@ cd backend && ruff check . && ruff format .
 
 ---
 
+### 🔄 Upgrading & Migrations
+
+When upgrading releases or applying schema changes:
+
+1. **Alembic Database Migrations:**  
+   For existing databases initialized before migrations, stamp baseline once:
+   ```bash
+   docker compose exec backend alembic stamp 0001_baseline
+   ```
+   Apply latest migrations:
+   ```bash
+   docker compose exec backend alembic upgrade head
+   ```
+
+2. **Purging Celery Queue & Cooldowns on Upgrade:**  
+   To purge stale queued Celery messages and target cooldown keys across upgrades, run:
+   ```bash
+   docker compose exec redis redis-cli FLUSHDB
+   ```
+   *Note: This command clears the Celery broker queue and rate-limiting cooldown keys in Redis without affecting persistent data in PostgreSQL.*
+
+---
+
 ## 🗺️ Roadmap
 
 - [x] **Repo hygiene & quickfixes** — UTF-8 requirements split, ReportLab XML escaping, tri-state check display, clean schemas

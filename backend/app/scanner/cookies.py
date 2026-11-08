@@ -1,8 +1,5 @@
-import httpx
 from app.scanner.net.http_fetch import FetchResult, fetch_target
 from app.scanner.net.ssrf_guard import UnsafeTargetError
-
-_ORIG_HTTPX_GET = httpx.get
 
 
 def scan_cookies(url: str, fetch_result: FetchResult | None = None) -> dict:
@@ -11,38 +8,15 @@ def scan_cookies(url: str, fetch_result: FetchResult | None = None) -> dict:
     Pure function — takes a URL and optional FetchResult, returns a result dict.
     """
     if fetch_result is None:
-        if httpx.get != _ORIG_HTTPX_GET:
-            try:
-                response = httpx.get(
-                    url,
-                    follow_redirects=True,
-                    timeout=10.0,
-                    headers={"User-Agent": "Mozilla/5.0 (compatible; SiteShield-Scanner/1.0)"},
-                )
-                raw_cookies = response.headers.get_list("set-cookie") if hasattr(response.headers, "get_list") else []
-                fetch_result = FetchResult(
-                    final_url=url,
-                    status_code=getattr(response, "status_code", 200),
-                    cookies=[{"raw": c, "url": url, "hop": 0} for c in raw_cookies],
-                    all_headers=[("set-cookie", c) for c in raw_cookies],
-                )
-            except httpx.RequestError as exc:
-                return {
-                    "error": f"Could not reach the site: {exc.__class__.__name__}",
-                    "unreachable": True,
-                    "score": 0,
-                    "checks": [],
-                }
-        else:
-            try:
-                fetch_result = fetch_target(url)
-            except UnsafeTargetError as exc:
-                return {
-                    "error": f"SSRF blocked: {exc}",
-                    "unreachable": True,
-                    "score": 0,
-                    "checks": [],
-                }
+        try:
+            fetch_result = fetch_target(url)
+        except UnsafeTargetError as exc:
+            return {
+                "error": f"SSRF blocked: {exc}",
+                "unreachable": True,
+                "score": 0,
+                "checks": [],
+            }
 
     if fetch_result.unreachable:
         return {

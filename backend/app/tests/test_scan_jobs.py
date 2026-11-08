@@ -190,3 +190,209 @@ def test_worker_run_scan_job_unsafe_target_saves_no_scan(monkeypatch):
     scan_count = db.query(Scan).filter(Scan.domain_id == domain_id).count()
     assert scan_count == 0
     db.close()
+
+
+# -----------------------------------------------------------------------------
+# Scheduled Scan Sweep Tests
+# -----------------------------------------------------------------------------
+
+def test_scheduled_scan_sweep_enqueues_monitored_domains(monkeypatch):
+    """Monitored domains get a ScanJob with source='scheduled'; unmonitored are skipped."""
+    from app.scanner.tasks import scheduled_scan_sweep
+    from app.tests.conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = User(email="sched_user1@example.com", hashed_password="pw")
+    db.add(user)
+    db.commit()
+
+    d_monitored = Domain(url="https://monitored.example.com", owner_id=user.id, monitoring_enabled=True)
+    d_unmonitored = Domain(url="https://unmonitored.example.com", owner_id=user.id, monitoring_enabled=False)
+    db.add_all([d_monitored, d_unmonitored])
+    db.commit()
+    monitored_id = d_monitored.id
+    unmonitored_id = d_unmonitored.id
+    db.close()
+
+    class FakeTask:
+        id = "fake-scheduled-task-id"
+
+    enqueued_jobs = []
+    monkeypatch.setattr("app.scanner.tasks.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("app.scanner.tasks.run_scan_job.delay", lambda job_id: enqueued_jobs.append(job_id) or FakeTask())
+    monkeypatch.setattr("app.scanner.tasks.get_redis_client", lambda: None)
+
+    res = scheduled_scan_sweep()
+    assert res["enqueued"] == 1
+    assert len(enqueued_jobs) == 1
+
+    db = TestingSessionLocal()
+    job = db.query(ScanJob).filter(ScanJob.id == uuid.UUID(enqueued_jobs[0])).first()
+    assert job is not None
+    assert job.source == "scheduled"
+    assert job.domain_id == monitored_id
+    assert job.target_hostname == "monitored.example.com"
+
+    # Verify unmonitored got no job
+    unmonitored_job = db.query(ScanJob).filter(ScanJob.domain_id == unmonitored_id).first()
+    assert unmonitored_job is None
+    db.close()
+
+
+def test_scheduled_scan_sweep_skips_opted_out_hostname(monkeypatch):
+    """An opted-out hostname is skipped during the scheduled scan sweep."""
+    from app.scanner.tasks import scheduled_scan_sweep
+    from app.tests.conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = User(email="sched_optout@example.com", hashed_password="pw")
+    db.add(user)
+    db.commit()
+
+    d = Domain(url="https://optout-sweep.example.com", owner_id=user.id, monitoring_enabled=True)
+    opt = ScanOptOut(hostname="optout-sweep.example.com", reason="Do not scan")
+    db.add_all([d, opt])
+    db.commit()
+    domain_id = d.id
+    db.close()
+
+    enqueued_jobs = []
+    monkeypatch.setattr("app.scanner.tasks.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("app.scanner.tasks.run_scan_job.delay", lambda job_id: enqueued_jobs.append(job_id))
+    monkeypatch.setattr("app.scanner.tasks.get_redis_client", lambda: None)
+
+    res = scheduled_scan_sweep()
+    assert res["enqueued"] == 0
+    assert len(enqueued_jobs) == 0
+
+    db = TestingSessionLocal()
+    job = db.query(ScanJob).filter(ScanJob.domain_id == domain_id).first()
+    assert job is None
+    db.close()
+
+
+def test_scheduled_scan_sweep_skips_queued_or_running_job(monkeypatch):
+    """A domain with a queued or running job is not duplicated."""
+    from app.scanner.tasks import scheduled_scan_sweep
+    from app.tests.conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = User(email="sched_dedupe@example.com", hashed_password="pw")
+    db.add(user)
+    db.commit()
+
+    d1 = Domain(url="https://already-queued.example.com", owner_id=user.id, monitoring_enabled=True)
+    d2 = Domain(url="https://already-running.example.com", owner_id=user.id, monitoring_enabled=True)
+    db.add_all([d1, d2])
+    db.commit()
+
+    j1 = ScanJob(id=uuid.uuid4(), domain_id=d1.id, status="queued", source="manual", target_hostname="already-queued.example.com")
+    j2 = ScanJob(id=uuid.uuid4(), domain_id=d2.id, status="running", source="scheduled", target_hostname="already-running.example.com")
+    db.add_all([j1, j2])
+    db.commit()
+    db.close()
+
+    enqueued_jobs = []
+    monkeypatch.setattr("app.scanner.tasks.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("app.scanner.tasks.run_scan_job.delay", lambda job_id: enqueued_jobs.append(job_id))
+    monkeypatch.setattr("app.scanner.tasks.get_redis_client", lambda: None)
+
+    res = scheduled_scan_sweep()
+    assert res["enqueued"] == 0
+    assert len(enqueued_jobs) == 0
+
+
+def test_scheduled_scan_sweep_skips_cooldown_quietly(monkeypatch):
+    """A hostname on cooldown is skipped quietly without error."""
+    from app.scanner.tasks import scheduled_scan_sweep
+    from app.tests.conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = User(email="sched_cooldown@example.com", hashed_password="pw")
+    db.add(user)
+    db.commit()
+
+    d = Domain(url="https://cooldown-sweep.example.com", owner_id=user.id, monitoring_enabled=True)
+    db.add(d)
+    db.commit()
+    domain_id = d.id
+    db.close()
+
+    class FakeRedis:
+        def exists(self, key):
+            if "cooldown-sweep.example.com" in key:
+                return 1
+            return 0
+
+        def set(self, key, val, ex=None):
+            pass
+
+    enqueued_jobs = []
+    monkeypatch.setattr("app.scanner.tasks.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("app.scanner.tasks.run_scan_job.delay", lambda job_id: enqueued_jobs.append(job_id))
+    monkeypatch.setattr("app.scanner.tasks.get_redis_client", lambda: FakeRedis())
+
+    res = scheduled_scan_sweep()
+    assert res["enqueued"] == 0
+    assert len(enqueued_jobs) == 0
+
+    db = TestingSessionLocal()
+    job = db.query(ScanJob).filter(ScanJob.domain_id == domain_id).first()
+    assert job is None
+    db.close()
+
+
+def test_scheduled_scan_sweep_unsafe_target_creates_no_scan(monkeypatch):
+    """An unsafe target in a scheduled scan fails and creates no Scan row."""
+    import socket
+    from app.scanner.tasks import run_scan_job, scheduled_scan_sweep
+    from app.tests.conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = User(email="sched_unsafe@example.com", hashed_password="pw")
+    db.add(user)
+    db.commit()
+
+    d = Domain(url="https://unsafe-sweep.example.com", owner_id=user.id, monitoring_enabled=True)
+    db.add(d)
+    db.commit()
+    domain_id = d.id
+    db.close()
+
+    class FakeTask:
+        id = "fake-scheduled-task-id"
+
+    enqueued_jobs = []
+    monkeypatch.setattr("app.scanner.tasks.SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr("app.scanner.tasks.run_scan_job.delay", lambda job_id: enqueued_jobs.append(job_id) or FakeTask())
+    monkeypatch.setattr("app.scanner.tasks.get_redis_client", lambda: None)
+
+    res = scheduled_scan_sweep()
+    assert res["enqueued"] == 1
+    job_id = enqueued_jobs[0]
+
+    # Monkeypatch DNS resolution to private IP (127.0.0.1) during worker execution
+    def fake_getaddrinfo(host, port, *args, **kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", int(port)))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+
+    job_res = run_scan_job(job_id)
+    assert job_res["status"] == "failed"
+
+    db = TestingSessionLocal()
+    job = db.query(ScanJob).filter(ScanJob.id == uuid.UUID(job_id)).first()
+    assert job.status == "failed"
+    assert job.scan_id is None
+    assert (
+        "not allowed" in job.error.lower()
+        or "private" in job.error.lower()
+        or "non-public" in job.error.lower()
+        or "loopback" in job.error.lower()
+        or "ssrf" in job.error.lower()
+    )
+
+    # Crucially assert no Scan row was created
+    scans = db.query(Scan).filter(Scan.domain_id == domain_id).all()
+    assert len(scans) == 0
+    db.close()
