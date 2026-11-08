@@ -571,39 +571,45 @@ Chart.js line graph (via `react-chartjs-2`) plotting **score over time** across 
 
 Implemented all hygiene fixes, removed development detritus, and eliminated known quick bugs:
 
-- **Requirements separation & cleanup (C-5, H-7):**
+- **Requirements encoding & dev/runtime split (M-1):**
   - Converted `backend/requirements.txt` from UTF-16 LE with BOM to standard UTF-8 LF.
-  - Split developer dependencies (`pytest`, `pytest-cov`, `pytest-mock`, `ruff`, `flake8`) out into `backend/requirements-dev.txt`.
+  - Split developer dependencies (`pytest`, `pytest-cov`, `respx`, `freezegun`, `ruff`) out into `backend/requirements-dev.txt` with pinned versions.
   - Updated `.github/workflows/ci.yml` to install `requirements-dev.txt`.
   - Verified runtime requirements completeness: standalone virtualenv with only `requirements.txt` imports cleanly, Docker containers build and start with no missing packages.
 
-- **Git & cache cleanup (H-8, M-8):**
+- **Committed artefacts & template assets / branding cleanup (M-2):**
   - Untracked committed artifacts: `backend/celerybeat-schedule` and `frontend/.vite`.
   - Added ignore rules to `.gitignore` for `celerybeat-schedule*`, `.vite/`, `dist/`, and local scratch files.
-
-- **Frontend template cleanup & branding (H-6 interim, M-1, M-11):**
   - Deleted unused Vite starter templates and assets (`App.css`, `react.svg`, `vite.svg`, `hero.png`, `icons.svg`).
   - Added dedicated custom SVG shield favicon (`favicon.svg`), updated `index.html` title to "SiteShield — Website Security Posture Scanner", added description meta tag.
-  - Resolved `DomainDetail.jsx` duplicate title and action bar headers.
-  - Fixed React 19 / Vite ESLint errors cleanly:
-    - Extracted `useAuth` into `frontend/src/context/useAuth.js` to satisfy `react-refresh/only-export-components`.
-    - Refactored `DomainDetail.jsx` data fetching to prevent `react-hooks/set-state-in-effect`.
-    - `npm run lint` now exits 0 cleanly with zero errors/warnings.
-  - Exported `BASE_URL` from `frontend/src/api/client.js` and cleaned up `domains.js` imports.
 
-- **PDF report XML escaping & modernization (M-2):**
-  - Replaced manual single-quote escaping with standard `xml.sax.saxutils.escape` across all dynamic data (domain URL, headers, check names, check details, DNS records, advice).
-  - Modernized UTC datetime calls to `datetime.now(timezone.utc)` (Python 3.12+ compliant).
-  - Replaced unsupported Unicode emoji in PDF templates with clean ASCII labels.
-  - Added comprehensive test suite `test_reports.py` testing hostile markup (`<script>`, `<b`, `&`, `&amp;`), empty scans (`scans=[]`), and legacy scans (`categories=None`).
+- **Duplicate DomainOut schema & unused schemas (H-7):**
+  - Removed duplicate `DomainOut` definition in `backend/app/schemas.py`.
+  - Removed unused `ScanResult` and `HeaderCheck` schemas.
 
-- **Scanner partial scoring & tri-state display (Audit 0.6):**
+- **Duplicated domain title on detail page (H-8):**
+  - Resolved `DomainDetail.jsx` duplicate outer wrapper and header block (single `h1` and single action group).
+
+- **Inconclusive & partial check UX rendering (H-6):**
   - Added `"partial": True` to TLS certificate expiration check (`0 < days_left <= 30`), while keeping `"passed": False` to preserve strict scoring invariance.
+  - Added unit test `test_tls_certificate_expiry_scoring` in `test_scanners.py` asserting expiry check flags and TLS scores (85 for 20d, 100 for 60d).
   - Updated `ScanResult.jsx` `CheckRow` to visually distinguish all four states:
     - Pass (`✓` emerald green)
     - Partial (`!` amber with `Partial` badge)
     - Fail (`✗` red)
     - Inconclusive (`–` zinc grey with `Not scored` badge)
+
+- **PDF ReportLab markup escaping (C-5):**
+  - Replaced manual single-quote escaping with standard `xml.sax.saxutils.escape` across all dynamic data (domain URL, headers, check names, check details, DNS records, advice).
+  - Added test suite `test_reports.py` testing hostile markup (`<script>`, `<b`, `&`, `&amp;`), empty scans (`scans=[]`), and legacy scans (`categories=None`).
+
+- **PDF utcnow & emoji modernization (M-11):**
+  - Modernized UTC datetime calls to `datetime.now(timezone.utc)` (Python 3.12+ compliant).
+  - Replaced unsupported Unicode emoji entity in PDF templates with clean ASCII text.
+
+- **Frontend imports & BASE_URL export (M-8):**
+  - Exported `BASE_URL` from `frontend/src/api/client.js` and moved imports to the top in `domains.js`.
+  - Resolved ESLint issues cleanly: moved `useAuth` to `frontend/src/context/useAuth.js` and refactored `DomainDetail.jsx` effect data fetching (`npm run lint` exits 0).
 
 - **Developer tooling & configuration:**
   - Added `.editorconfig`, `Makefile`, and `backend/pyproject.toml`.
