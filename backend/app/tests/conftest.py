@@ -25,6 +25,16 @@ def fresh_db():
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+    # Clean any scan cooldown keys in test redis
+    from app.core.redis_client import get_redis_client
+    r = get_redis_client()
+    if r:
+        try:
+            keys = r.keys("scan:cooldown:*")
+            if keys:
+                r.delete(*keys)
+        except Exception:
+            pass
 
 
 @pytest.fixture(autouse=True)
