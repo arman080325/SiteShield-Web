@@ -29,11 +29,17 @@ export default function DomainCard({ domain, onDelete }) {
     setStatusText("queued");
 
     try {
-      // 1. Enqueue — returns instantly with a task_id
-      const { task_id } = await startScan(domain.id);
+      // 1. Enqueue — returns instantly with a job_id (or task_id fallback)
+      const res = await startScan(domain.id);
+      const jobId = res.job_id || res.task_id;
+
+      if (res.cached || res.status === "succeeded") {
+        setResult(res);
+        return;
+      }
 
       // 2. Poll until done, updating the status line as we go
-      const final = await pollScanStatus(task_id, (status) => {
+      const final = await pollScanStatus(jobId, (status) => {
         setStatusText(status);
       });
 

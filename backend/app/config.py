@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     redis_url: str = "redis://localhost:6379/0"
     scan_interval_seconds: int = 120  # 2 min for dev; bump to 86400 for daily
-    
+
+    scanner_user_agent: str = "SiteShieldBot/2.0 (+http://localhost:8080/bot)"
+    docs_enabled: bool = True
 
 
 settings = Settings()

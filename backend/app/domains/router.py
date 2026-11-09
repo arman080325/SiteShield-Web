@@ -1,3 +1,5 @@
+import socket
+from urllib.parse import urlsplit
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,7 @@ from app.database import get_db
 from app.models import User, Domain
 from app.schemas import DomainCreate, DomainOut, MonitoringToggle
 from app.auth.dependencies import get_current_user
+from app.scanner.net.ssrf_guard import UnsafeTargetError, resolve_public
 
 router = APIRouter(prefix="/domains", tags=["domains"])
 
@@ -15,6 +18,24 @@ def create_domain(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Perform DNS resolution check in router layer
+    parsed = urlsplit(payload.url)
+    hostname = (parsed.hostname or "").strip().lower()
+    port = parsed.port or (80 if parsed.scheme == "http" else 443)
+
+    try:
+        resolve_public(hostname, port)
+    except socket.gaierror:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="We couldn't find this domain. Check the spelling.",
+        )
+    except UnsafeTargetError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="This address isn't publicly reachable, so it can't be scanned.",
+        )
+
     # Prevent the same user from adding a duplicate domain
     existing = (
         db.query(Domain)
@@ -76,6 +97,7 @@ def delete_domain(
     db.delete(domain)
     db.commit()
     return None
+
 
 @router.patch("/{domain_id}/monitoring", response_model=DomainOut)
 def toggle_monitoring(

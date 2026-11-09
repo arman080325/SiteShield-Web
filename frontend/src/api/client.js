@@ -47,6 +47,13 @@ async function request(path, { method = "GET", body, form } = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    if (res.status === 429) {
+      const retryAfter = res.headers.get("Retry-After");
+      const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+      const minutes = Math.max(1, Math.ceil((isNaN(seconds) ? 60 : seconds) / 60));
+      throw new Error(`You can scan this site again in ${minutes} minute${minutes === 1 ? "" : "s"}.`);
+    }
+
     // FastAPI puts errors in `detail` — could be a string or a list
     const detail = data.detail;
     const message =

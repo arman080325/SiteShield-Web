@@ -3,6 +3,8 @@ import ssl
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
+from app.scanner.net.ssrf_guard import UnsafeTargetError, resolve_public
+
 
 def _parse_host(url: str) -> str:
     """Extract just the hostname from a URL."""
@@ -19,10 +21,28 @@ def scan_tls(url: str) -> dict:
     checks = []
     score = 0
 
+    try:
+        resolved_addrs = resolve_public(host, 443)
+    except UnsafeTargetError as exc:
+        return {
+            "error": f"SSRF blocked: {exc}",
+            "unreachable": True,
+            "score": 0,
+            "checks": [],
+        }
+    except (socket.gaierror, socket.timeout, ConnectionRefusedError) as exc:
+        return {
+            "error": f"Could not establish TLS connection: {exc.__class__.__name__}",
+            "unreachable": True,
+            "score": 0,
+            "checks": [],
+        }
+
     context = ssl.create_default_context()
 
     try:
-        with socket.create_connection((host, 443), timeout=10) as sock:
+        target_ip = resolved_addrs[0] if resolved_addrs else host
+        with socket.create_connection((target_ip, 443), timeout=10) as sock:
             with context.wrap_socket(sock, server_hostname=host) as ssock:
                 cert = ssock.getpeercert()
                 protocol = ssock.version()  # e.g. "TLSv1.3"

@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+
+from app.scanner.net.ssrf_guard import UnsafeTargetError, validate_url_syntax
 
 
 class UserCreate(BaseModel):
@@ -33,7 +35,15 @@ class DomainCreate(BaseModel):
         # Prepend scheme if the user omitted it
         if not v.startswith(("http://", "https://")):
             v = "https://" + v
-        return v.rstrip("/")
+        v = v.rstrip("/")
+
+        # Perform syntax validation only (User Addition 3)
+        try:
+            validate_url_syntax(v)
+        except (UnsafeTargetError, ValueError) as exc:
+            raise ValueError(str(exc))
+
+        return v
 
 
 class DomainOut(BaseModel):
