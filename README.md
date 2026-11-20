@@ -1,247 +1,233 @@
 <div align="center">
 
-# 🛡️ SiteShield
-
-### Website Security Posture · Continuous Monitoring · Actionable Intelligence
-
-**Know your website's security posture before someone else finds the gaps.**
-
-A multi-tenant security monitoring platform that audits publicly observable website configuration, assigns a weighted A–F security grade, preserves scan history, and continuously watches for changes — powered by FastAPI, React, Celery, and Redis.
+<img src=".github/readme/hero.svg" alt="SiteShield — know your website's security posture before someone else finds the gaps" width="100%" />
 
 <br/>
 
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=111827)](https://react.dev/)
-[![Celery](https://img.shields.io/badge/Jobs-Celery-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Redis](https://img.shields.io/badge/Queue-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Dev_Environment-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+<a href="#-04--quick-start"><img src="https://img.shields.io/badge/▶_Quick_start-10b981?style=for-the-badge&labelColor=0a1f19" alt="Quick start"/></a>
+<a href="#-03--how-it-works"><img src="https://img.shields.io/badge/◈_Architecture-0a1f19?style=for-the-badge&labelColor=0a1f19&color=0a1f19" alt="Architecture"/></a>
+<a href="#-05--api-surface"><img src="https://img.shields.io/badge/⚡_API-0a1f19?style=for-the-badge&labelColor=0a1f19&color=0a1f19" alt="API"/></a>
+<a href="https://github.com/arman080325/SiteShield-Web/issues"><img src="https://img.shields.io/badge/✦_Report_an_issue-0a1f19?style=for-the-badge&labelColor=0a1f19&color=0a1f19" alt="Report an issue"/></a>
 
-<br/>
+<br/><br/>
 
-[**Explore the repository**](https://github.com/arman080325/SiteShield-Web)
-&nbsp; • &nbsp;
-[**Setup guide**](#-getting-started)
-&nbsp; • &nbsp;
-[**Report an issue**](https://github.com/arman080325/SiteShield-Web/issues)
+<img src="https://img.shields.io/badge/python-3.13-10b981?style=flat-square&logo=python&logoColor=white&labelColor=0a1f19" alt="Python 3.13"/>
+<img src="https://img.shields.io/badge/fastapi-async_api-10b981?style=flat-square&logo=fastapi&logoColor=white&labelColor=0a1f19" alt="FastAPI"/>
+<img src="https://img.shields.io/badge/react-19-10b981?style=flat-square&logo=react&logoColor=white&labelColor=0a1f19" alt="React 19"/>
+<img src="https://img.shields.io/badge/celery-+_beat-10b981?style=flat-square&logo=celery&logoColor=white&labelColor=0a1f19" alt="Celery"/>
+<img src="https://img.shields.io/badge/redis-8-10b981?style=flat-square&logo=redis&logoColor=white&labelColor=0a1f19" alt="Redis 8"/>
+<img src="https://img.shields.io/badge/postgres-16-10b981?style=flat-square&logo=postgresql&logoColor=white&labelColor=0a1f19" alt="PostgreSQL 16"/>
+<img src="https://img.shields.io/badge/docker-compose-10b981?style=flat-square&logo=docker&logoColor=white&labelColor=0a1f19" alt="Docker Compose"/>
+<a href="https://github.com/arman080325/SiteShield-Web/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/arman080325/SiteShield-Web/ci.yml?branch=main&style=flat-square&label=CI&labelColor=0a1f19&color=10b981&logo=githubactions&logoColor=white" alt="CI status"/></a>
 
 </div>
 
----
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-## 👁️ At a glance
+## ◈ 01 · The mission
 
-SiteShield helps website owners understand and improve their external security posture. Add a domain, run a scan, review evidence across four categories, and follow its security grade as monitoring builds a history over time.
+**SiteShield is a multi-tenant security-posture monitor for the public face of your website.**
+Add a domain, fire a scan, and a Celery worker inspects what any visitor's browser can see — HTTP security headers, TLS, DNS & email records and cookie flags. The results are rolled into a weighted **A–F grade**, kept as history, re-checked on a schedule by Celery Beat, and exportable as a **PDF report**.
+
+<table>
+<tr>
+<td width="25%" align="center"><h3>🔍</h3><b>Inspect</b><br/><sub>4 categories · 16 individual checks</sub></td>
+<td width="25%" align="center"><h3>🎯</h3><b>Grade</b><br/><sub>weighted score → A, B, C, D, E, F or N/A</sub></td>
+<td width="25%" align="center"><h3>⏰</h3><b>Watch</b><br/><sub>scheduled sweeps · history · trend chart</sub></td>
+<td width="25%" align="center"><h3>📄</h3><b>Report</b><br/><sub>one-click PDF for every domain</sub></td>
+</tr>
+</table>
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/1404de2e-ddef-4974-a68d-377daba141e9" alt="SiteShield security monitoring dashboard" width="100%" />
-  <sub>SiteShield — security posture dashboard</sub>
+  <img src="https://github.com/user-attachments/assets/1404de2e-ddef-4974-a68d-377daba141e9" alt="SiteShield security posture dashboard" width="100%" />
+  <sub><i>The SiteShield dashboard — every domain, its latest grade, and a one-click rescan.</i></sub>
 </div>
 
-## ✨ What SiteShield does
+### Watch a scan happen
 
-| Capability | Description |
-|---|---|
-| 🔐 **Account security** | JWT-based signup/login, bcrypt password hashing, protected API routes |
-| 🧩 **Multi-tenant domains** | Add and manage domains with user-scoped data access |
-| 🔍 **Four-category scanning** | Inspect HTTP headers, TLS, DNS/email configuration, and cookie security |
-| 🎯 **Weighted security grade** | Combine category scores into an overall score and A–F grade |
-| ⚙️ **Background scan jobs** | Queue scans through Redis and execute them with Celery workers |
-| ⏰ **Scheduled monitoring** | Celery Beat periodically queues scans for monitored domains |
-| 📈 **Scan history & trends** | Persist scan results and explore historical posture changes |
-| 📄 **PDF reporting** | Generate a shareable report for a domain scan |
-| 🛡️ **Defensive safeguards** | Target validation and SSRF protections help prevent unsafe scan destinations |
+<div align="center">
+  <img src=".github/readme/scan-terminal.svg" alt="Animated walkthrough of a SiteShield scan job: request accepted, worker passes the SSRF guard, four categories scored, overall grade A" width="100%" />
+</div>
 
-## 🔬 What gets checked?
+> Each scan is an asynchronous **job**: the API answers `202 Accepted` immediately, the dashboard polls `GET /domains/scan-jobs/{job_id}`, and the finished result lands in scan history.
 
-SiteShield currently evaluates four security categories. Each category contains individual checks and contributes to the combined grade.
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-<box>
-</box>
+## ◈ 02 · What gets inspected
 
-| Category | Weight | Example signals |
-|---|---:|---|
-| **HTTP security headers** | 35% | Content-Security-Policy, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
-| **TLS / SSL** | 30% | Certificate validity and expiry, TLS connection and protocol information |
-| **DNS & email** | 20% | SPF, DMARC, and CAA configuration |
-| **Cookies** | 15% | Secure, HttpOnly, and SameSite attributes |
+<div align="center">
+  <img src=".github/readme/scoring.svg" alt="Animated gauge showing a weighted score of 92 out of 100 mapping to grade A, alongside category weights" width="100%" />
+</div>
 
-### Overall grade bands
+<table>
+<tr>
+<th align="left">Category</th><th align="center">Weight</th><th align="left">Checks performed</th>
+</tr>
+<tr>
+<td>🧱 <b>HTTP security headers</b></td><td align="center"><code>35%</code></td>
+<td>
+<code>Content-Security-Policy</code> <sub>25 pts</sub> ·
+<code>Strict-Transport-Security</code> <sub>20</sub> ·
+<code>X-Frame-Options</code> <sub>15</sub> ·
+<code>X-Content-Type-Options</code> <sub>15</sub> ·
+<code>Referrer-Policy</code> <sub>15</sub> ·
+<code>Permissions-Policy</code> <sub>10</sub>
+</td>
+</tr>
+<tr>
+<td>🔐 <b>TLS / SSL</b></td><td align="center"><code>30%</code></td>
+<td>Certificate validation · valid certificate · certificate expiry · negotiated protocol version</td>
+</tr>
+<tr>
+<td>📨 <b>DNS &amp; email</b></td><td align="center"><code>20%</code></td>
+<td><code>SPF</code> <sub>35 pts</sub> · <code>DMARC</code> <sub>40</sub> · <code>CAA</code> <sub>25</sub> — a lookup that <i>fails</i> is excluded rather than scored as missing</td>
+</tr>
+<tr>
+<td>🍪 <b>Cookies</b></td><td align="center"><code>15%</code></td>
+<td><code>Secure</code> · <code>HttpOnly</code> · <code>SameSite</code> on every <code>Set-Cookie</code> (a site that sets no cookies is handled explicitly)</td>
+</tr>
+</table>
 
-| Grade | Score | Meaning |
-|:---:|---:|---|
-| <span style="color:#16a34a">**A**</span> | 90–100 | Strong observed posture |
-| **B** | 75–89 | Good, with improvements possible |
-| **C** | 60–74 | Several gaps deserve attention |
-| **D** | 40–59 | Significant weaknesses observed |
-| **E** | 20–39 | Major configuration gaps |
-| **F** | 0–19 | Weak observed posture |
-| **N/A** | — | No category could be meaningfully scored |
+### The grade ladder
 
-**Scoring detail:** category weights are re-normalized when a category is unreachable. A connection failure is not treated as the same thing as a successfully tested configuration that fails a security check.
+<div align="center">
 
-## 🏗️ How the platform works
+<img src="https://img.shields.io/badge/A-90–100-10b981?style=for-the-badge&labelColor=065f46" alt="A 90–100"/>
+<img src="https://img.shields.io/badge/B-75–89-84cc16?style=for-the-badge&labelColor=3f6212" alt="B 75–89"/>
+<img src="https://img.shields.io/badge/C-60–74-eab308?style=for-the-badge&labelColor=713f12" alt="C 60–74"/>
+<img src="https://img.shields.io/badge/D-40–59-f97316?style=for-the-badge&labelColor=7c2d12" alt="D 40–59"/>
+<img src="https://img.shields.io/badge/E-20–39-ea580c?style=for-the-badge&labelColor=7c2d12" alt="E 20–39"/>
+<img src="https://img.shields.io/badge/F-0–19-dc2626?style=for-the-badge&labelColor=7f1d1d" alt="F 0–19"/>
+<img src="https://img.shields.io/badge/N%2FA-not_scorable-a1a1aa?style=for-the-badge&labelColor=3f3f46" alt="N/A not scorable"/>
 
-Scans run asynchronously so an API request does not have to wait for every network check to finish.
+</div>
+
+> [!NOTE]
+> **Honest scoring.** If a category can't be reached (timeout, refused connection) it is dropped and the remaining weights are re-normalised, so *"couldn't test"* is never confused with *"tested and failed"*. When nothing could be scored, the grade is **N/A** instead of a misleading **F**.
+
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
+
+## ◈ 03 · How it works
+
+<div align="center">
+  <img src=".github/readme/pipeline.svg" alt="Animated pipeline: React dashboard to FastAPI to Redis to Celery worker to scanners, persisted in PostgreSQL, with Celery Beat scheduling sweeps" width="100%" />
+</div>
+
+<table>
+<tr><td>
+
+**① Request** — a signed-in user hits *Scan*; FastAPI verifies the JWT and that the domain belongs to them.<br/>
+**② Queue** — a `scan_jobs` row is created, a 5-minute per-host cooldown is set in Redis, and the Celery task is enqueued.<br/>
+**③ Scan** — a worker resolves the target through the SSRF guard, pins the peer IP and runs all four category scanners.<br/>
+**④ Store** — the result, weighted score and grade are persisted; job progress and errors are recorded along the way.<br/>
+**⑤ Poll** — the dashboard polls the job until it finishes, then refreshes history and the score-trend chart.<br/>
+**⑥ Repeat** — Celery Beat sweeps every monitored domain every `SCAN_INTERVAL_SECONDS`, honouring opt-outs, dedupe and cooldowns.
+
+</td></tr>
+</table>
+
+<details>
+<summary><b>🗺️ Prefer a plain diagram? Expand the Mermaid version</b></summary>
+<br/>
 
 ```mermaid
-flowchart TB
-    USER["👤 User"]
-    UI["⚛️ React + Vite Dashboard"]
-    API["⚡ FastAPI REST API"]
-    DB[("🗄️ PostgreSQL / SQLite")]
-    REDIS[("📮 Redis Queue")]
-    WORKER["⚙️ Celery Worker"]
-    BEAT["⏰ Celery Beat"]
-    SCAN["🔍 Headers · TLS · DNS · Cookies"]
-    REPORT["📄 Scan Result · Grade · PDF"]
-
-    USER --> UI
-    UI -->|"REST + JWT"| API
-    API <--> DB
-    API -->|"enqueue scan"| REDIS
-    BEAT -->|"scheduled sweep"| REDIS
-    REDIS --> WORKER
-    WORKER --> SCAN
-    SCAN --> DB
-    DB --> REPORT
-    API -->|"status / history"| UI
+flowchart LR
+    UI["⚛️ React + Vite"] -->|REST + JWT| API["⚡ FastAPI"]
+    API <--> DB[("🗄️ PostgreSQL")]
+    API -->|enqueue scan_job| R[("📮 Redis")]
+    BEAT["⏰ Celery Beat"] -->|scheduled sweep| R
+    R --> W["⚙️ Celery Worker"]
+    W -->|ssrf_guard + pinned fetch| S["🔍 Headers · TLS · DNS · Cookies"]
+    W -->|result · score · grade| DB
+    API -->|job status · history · PDF| UI
 ```
 
-**The scan lifecycle**
+</details>
 
-1. A signed-in user requests a scan for a domain.
-2. The API validates ownership and creates a scan job.
-3. Redis queues the job and the API returns without waiting for the scan to finish.
-4. A Celery worker performs the target checks and updates job progress.
-5. The completed result is stored and can be retrieved through the API and dashboard.
-6. Celery Beat periodically queues new jobs for domains with monitoring enabled.
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-## 🧰 Technology stack
+## ◈ Defence in depth
 
-| Layer | Technologies |
-|---|---|
-| Frontend | React 19, Vite, Tailwind CSS, React Router |
-| Visualisation | Chart.js, react-chartjs-2 |
-| Backend API | Python, FastAPI, Pydantic |
-| Persistence | SQLAlchemy, SQLite for local development, PostgreSQL for containerised deployment |
-| Authentication | JWT, bcrypt |
-| Background processing | Celery, Redis, Celery Beat |
-| Network checks | HTTPX, Python TLS/socket tools, dnspython |
-| PDF reports | ReportLab |
-| Database migrations | Alembic |
-| Quality & tooling | Pytest, Ruff, Respx, Freezegun, ESLint |
-| Local infrastructure | Docker Compose |
+A tool that makes outbound requests on a user's behalf is itself a target. SiteShield treats every scan request as untrusted input.
 
-## 🚀 Getting started
+<div align="center">
+  <img src=".github/readme/defense-layers.svg" alt="Animated defence layers: a valid request passes eight gates, while a request targeting a cloud metadata IP is blocked at the SSRF guard" width="100%" />
+</div>
 
-### Prerequisites
+| Layer | What it stops | Where it lives |
+|---|---|---|
+| 🚦 **Rate limiting** | Signup `5/hour`, login `5/min · 20/hour`, scans `30/hour` per user — JSON `429` with `Retry-After` | `app/core/ratelimit.py` (slowapi + Redis) |
+| 🔑 **JWT + bcrypt** | Plain-text passwords and unauthenticated access to protected routes | `app/auth/` |
+| 🧍 **Ownership scoping** | IDOR — another tenant's domain simply returns `404` | `app/domains/`, `app/scanner/router.py` |
+| 🙅 **Opt-out list** | Scanning hosts listed in `scan_opt_outs` | `scan_opt_outs` table |
+| ♻️ **Dedupe + cache** | Duplicate jobs; a scan younger than 5 minutes is returned as `cached` | `app/scanner/router.py` |
+| ⏳ **Cross-tenant cooldown** | Hammering one hostname — 300 s Redis cooldown shared by all users | Redis `scan:cooldown:{host}` |
+| 🧭 **SSRF guard** | Private, loopback, link-local, reserved & metadata IPs, non-80/443 ports, `.local`/`.internal` hosts | `app/scanner/net/ssrf_guard.py` |
+| 📌 **Peer pinning** | DNS-rebinding — the connected peer IP is re-verified, failing closed | `app/scanner/net/http_fetch.py` |
+| 🧾 **Hardened API responses** | `nosniff`, `no-referrer`, strict CSP on JSON and `no-store` on sensitive responses | `app/main.py` |
 
-- Python 3.11 or newer
-- Node.js compatible with the Vite version in `frontend/package.json`
-- Docker Desktop with Docker Compose (recommended for the complete stack)
-- Git
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-### Option 1 — Start the complete stack with Docker
+## ◈ 04 · Quick start
 
-From the repository root:
+### 🐳 Option A — the whole stack in one command
 
 ```bash
-docker compose up --build
+git clone https://github.com/arman080325/SiteShield-Web.git
 ```
-
-Docker Compose starts the services defined in `docker-compose.yml`:
-
-- Frontend
-- FastAPI backend
-- Celery worker
-- Celery Beat scheduler
-- Redis
-- PostgreSQL
-
-Open the application and API documentation:
-
-| Service | Local URL |
-|---|---|
-| Frontend | http://localhost:8080 |
-| Backend API | http://localhost:8000 |
-| API documentation | http://localhost:8000/docs |
-| Health check | http://localhost:8000/health |
-
-Stop the stack with:
 
 ```bash
-docker compose down
+cd SiteShield-Web && docker compose up --build
 ```
 
-Use `docker compose down -v` only when you intentionally want to remove the persisted Compose volumes, including local PostgreSQL data.
+Compose brings up **six services** — `frontend`, `backend`, `worker`, `beat`, `redis`, `postgres` — and the backend runs Alembic migrations on boot.
 
-### Option 2 — Run services individually
+| Service | URL |
+|---|---|
+| 🖥️ Dashboard | <http://localhost:8080> |
+| ⚡ API | <http://localhost:8000> |
+| 📘 Swagger docs | <http://localhost:8000/docs> |
+| 💓 Health check | <http://localhost:8000/health> |
 
-**1. Start Redis**
+Stop with `docker compose down` (add `-v` only if you really want to wipe the local PostgreSQL volume).
 
-You can use Docker just for Redis:
+<details>
+<summary><b>🧩 Option B — run every service by hand</b></summary>
+<br/>
+
+**1 · Redis**
 
 ```bash
 docker run -d --name siteshield-redis -p 6379:6379 redis:8-alpine
 ```
 
-**2. Set up the backend**
+**2 · Backend API** (SQLite is used by default when no `DATABASE_URL` is set)
 
 ```bash
 cd backend
 python -m venv venv
-```
-
-Activate the environment:
-
-```powershell
-# Windows PowerShell
-.\venv\Scripts\Activate.ps1
-```
-
-```bash
-# macOS / Linux
-source venv/bin/activate
-```
-
-Install development dependencies and start FastAPI:
-
-```bash
+source venv/bin/activate          # Windows: .\venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-The local development configuration uses SQLite by default. Configure environment variables in your local `.env` when you need to override database, Redis, CORS, or other settings. Never commit secrets.
-
-**3. Start the Celery worker**
-
-Open another terminal, activate the backend virtual environment, and run:
+**3 · Celery worker** (new terminal, same venv)
 
 ```bash
 cd backend
 celery -A app.celery_app.celery_app worker --loglevel=info
 ```
 
-On Windows, use the solo pool:
+On Windows add `--pool=solo`.
 
-```powershell
-celery -A app.celery_app.celery_app worker --loglevel=info --pool=solo
-```
-
-**4. Start Celery Beat**
-
-For scheduled monitoring, open another backend terminal:
+**4 · Celery Beat** for scheduled monitoring (new terminal)
 
 ```bash
 cd backend
 celery -A app.celery_app.celery_app beat --loglevel=info
 ```
 
-**5. Start the frontend**
-
-In a separate terminal:
+**5 · Frontend** (new terminal)
 
 ```bash
 cd frontend
@@ -249,143 +235,183 @@ npm install
 npm run dev
 ```
 
-The Vite development server is configured for **http://localhost:5173**.
+The Vite dev server runs on <http://localhost:5173>.
 
-> **Development note:** the API, Redis, worker, scheduler, and frontend are separate processes in this setup. Keep the required terminals running while testing background and scheduled scans.
+</details>
 
-## 🧪 Tests and code quality
+<details>
+<summary><b>⚙️ Configuration reference</b> — <code>backend/.env</code> (see <code>backend/.env.example</code>)</summary>
+<br/>
 
-Backend development dependencies are defined in `backend/requirements-dev.txt`.
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///./siteshield.db` | SQLAlchemy URL — PostgreSQL in Docker |
+| `REDIS_URL` | `redis://localhost:6379/0` | Celery broker, cooldowns and rate-limit storage |
+| `JWT_SECRET` | dev value | **Always override outside local development** |
+| `JWT_ALGORITHM` | `HS256` | Token signing algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access-token lifetime |
+| `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins |
+| `SCAN_INTERVAL_SECONDS` | `120` | Celery Beat sweep interval — raise to `86400` for daily |
+| `SCANNER_USER_AGENT` | `SiteShieldBot/2.0 (…)` | User-Agent sent to scanned sites |
+| `DOCS_ENABLED` | `true` | Toggle `/docs`, `/redoc` and `/openapi.json` |
+| `RUN_MIGRATIONS` | — | Set to `1` to run `alembic upgrade head` on container start |
 
-**Backend tests**
+</details>
+
+> [!IMPORTANT]
+> Never commit a real `.env`. The `JWT_SECRET` default exists only so the app boots locally.
+
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
+
+## ◈ 05 · API surface
+
+Interactive docs live at **`/docs`** whenever `DOCS_ENABLED=true`.
+
+| Method | Endpoint | What it does |
+|:---:|---|---|
+| ![POST](https://img.shields.io/badge/POST-10b981?style=flat-square) | `/auth/signup` | Create an account <sub>(5/hour)</sub> |
+| ![POST](https://img.shields.io/badge/POST-10b981?style=flat-square) | `/auth/login` | Exchange credentials for a JWT <sub>(5/min · 20/hour)</sub> |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/auth/me` | Current user |
+| ![POST](https://img.shields.io/badge/POST-10b981?style=flat-square) | `/domains` | Add a domain |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/domains` · `/domains/{id}` | List your domains / fetch one |
+| ![PATCH](https://img.shields.io/badge/PATCH-eab308?style=flat-square) | `/domains/{id}/monitoring` | Toggle scheduled monitoring |
+| ![DELETE](https://img.shields.io/badge/DELETE-dc2626?style=flat-square) | `/domains/{id}` | Remove a domain and its history |
+| ![POST](https://img.shields.io/badge/POST-10b981?style=flat-square) | `/domains/{id}/scan` | Queue a scan → `202` job · `200` existing job or cached result · `429` cooldown <sub>(30/hour)</sub> |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/domains/scan-jobs/{job_id}` | Poll job status and progress |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/domains/{id}/scans` | Scan history |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/domains/{id}/report` | Download the PDF report |
+| ![GET](https://img.shields.io/badge/GET-0ea5e9?style=flat-square) | `/health` | Liveness probe |
+
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
+
+## ◈ 06 · Tech stack
+
+<div align="center">
+
+<img src="https://skillicons.dev/icons?i=react,vite,tailwind,js,python,fastapi,postgres,redis,sqlite,docker,nginx,githubactions&theme=dark" alt="React, Vite, Tailwind, JavaScript, Python, FastAPI, PostgreSQL, Redis, SQLite, Docker, Nginx, GitHub Actions"/>
+
+</div>
+
+| Layer | Built with |
+|---|---|
+| **Frontend** | React 19 · Vite · Tailwind CSS · React Router · Chart.js / react-chartjs-2 |
+| **API** | FastAPI · Pydantic · SQLAlchemy · Alembic · slowapi |
+| **Auth** | JWT · bcrypt |
+| **Jobs** | Celery worker + Celery Beat on Redis |
+| **Scanning** | HTTPX · Python `ssl` / `socket` · dnspython |
+| **Reports** | ReportLab |
+| **Data** | PostgreSQL 16 (Docker) · SQLite (local dev) |
+| **Quality** | Pytest · Respx · Freezegun · Ruff · ESLint · GitHub Actions |
+| **Delivery** | Docker Compose · Nginx-served frontend build |
+
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
+
+## ◈ 07 · Tests & quality gates
 
 ```bash
-cd backend
-python -m pytest -v
+make test    # pytest + frontend production build
 ```
-
-**Backend lint and formatting**
 
 ```bash
-cd backend
-ruff check .
-ruff format .
+make lint    # ruff check + eslint
 ```
-
-**Frontend checks**
 
 ```bash
-cd frontend
-npm run lint
-npm run build
+make fmt     # ruff format
 ```
 
-## 🛡️ Security by design
+The backend suite covers the scanners, auth & domain API, scan-job lifecycle, rate limits, security headers, PDF reports, Alembic migrations and a dedicated **SSRF suite** (loopback, private ranges, IPv4-mapped IPv6, metadata IPs, blocked ports and suffixes). CI runs it against a real PostgreSQL service, then lints and builds the frontend.
 
-SiteShield is built for defensive assessment of websites you own or are explicitly authorised to assess.
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-Security-related implementation includes:
+## ◈ 08 · Roadmap
 
-- **Password protection:** passwords are hashed with bcrypt rather than stored in plaintext.
-- **JWT authentication:** protected API routes verify signed access tokens.
-- **Tenant isolation:** domain and scan operations are scoped to the authenticated owner to reduce IDOR risk.
-- **SSRF safeguards:** scan targets are validated against unsafe destinations, including private or otherwise non-public address resolution.
-- **Rate limiting:** API limits help constrain repeated requests.
-- **HTTP security headers:** backend responses apply defensive response headers and no-store behaviour to sensitive responses.
-- **Input and target validation:** domains are normalised and checked before scanning.
+```diff
++ Repository foundation · backend / frontend structure
++ JWT authentication and protected routes
++ User-scoped domain management
++ HTTP security-header scanning
++ TLS, DNS / email and cookie checks
++ Weighted A–F scoring with unreachable-category handling
++ Redis-backed Celery scan jobs with dedupe and cooldowns
++ Scheduled monitoring with Celery Beat
++ Scan history and trend visualisation
++ PDF reporting
++ SSRF guard, anti-rebinding and API rate limits
+- Production deployment and operational hardening
+- Regression alerts and notification delivery
+```
 
-**Responsible use:** only scan domains for which you have permission. SiteShield performs external configuration checks; it is not a substitute for a full penetration test, source-code audit, or incident response process. Automated findings can be incomplete and should be reviewed before making security decisions.
+<sub>`+` shipped &nbsp;·&nbsp; `-` up next — the full build log lives in <a href="PROGRESS.md"><b>PROGRESS.md</b></a>.</sub>
 
-## 🗺️ Project roadmap
-
-The project has progressed through its core platform, four-category asynchronous scanning, and monitoring/history work. The next development focus is production hardening and delivery.
-
-- [x] Repository foundation and backend/frontend structure
-- [x] JWT authentication and protected routes
-- [x] User-scoped domain management
-- [x] HTTP security-header scanning
-- [x] TLS, DNS/email, and cookie checks
-- [x] Weighted A–F scoring with unreachable-category handling
-- [x] Redis-backed Celery scan jobs
-- [x] Scheduled monitoring with Celery Beat
-- [x] Scan history and trend visualisation
-- [x] PDF scan reporting
-- [x] SSRF target safeguards and scan-job protections
-- [ ] Complete production deployment and operational hardening
-- [ ] Expand regression-alert delivery and notification workflows
-
-## 📁 Repository structure
+<details>
+<summary><b>📁 Repository map</b></summary>
+<br/>
 
 ```text
 SiteShield-Web/
 ├── backend/
 │   ├── app/
-│   │   ├── auth/                 # Signup, login, JWT and auth dependencies
-│   │   ├── domains/              # Domain CRUD and monitoring controls
+│   │   ├── auth/            # signup, login, JWT, password hashing
+│   │   ├── domains/         # domain CRUD + monitoring toggle
 │   │   ├── scanner/
-│   │   │   ├── net/              # HTTP fetching and SSRF safeguards
-│   │   │   ├── headers.py        # HTTP security-header checks
-│   │   │   ├── tls.py            # TLS / certificate checks
-│   │   │   ├── dns_scan.py       # DNS and email configuration checks
-│   │   │   ├── cookies.py        # Cookie security checks
-│   │   │   ├── tasks.py          # Celery scan and scheduled-sweep tasks
-│   │   │   └── router.py         # Scan, status and history endpoints
-│   │   ├── reports/              # PDF report generation
-│   │   ├── core/                 # Shared infrastructure and safeguards
-│   │   ├── main.py               # FastAPI application
-│   │   ├── models.py             # SQLAlchemy models
-│   │   ├── schemas.py            # Pydantic schemas
-│   │   ├── database.py           # Database engine and sessions
-│   │   ├── config.py             # Environment-based settings
-│   │   └── celery_app.py         # Celery configuration and schedule
-│   ├── alembic/                  # Database migrations
-│   ├── requirements.txt
-│   ├── requirements-dev.txt
-│   └── Dockerfile
+│   │   │   ├── net/         # ssrf_guard.py · http_fetch.py (pinned, anti-rebinding)
+│   │   │   ├── headers.py   # HTTP security headers
+│   │   │   ├── tls.py       # certificate + protocol
+│   │   │   ├── dns_scan.py  # SPF · DMARC · CAA
+│   │   │   ├── cookies.py   # Secure · HttpOnly · SameSite
+│   │   │   ├── tasks.py     # Celery scan task, weighting, scheduled sweep
+│   │   │   └── router.py    # scan, job status, history, report endpoints
+│   │   ├── reports/         # ReportLab PDF generation
+│   │   ├── core/            # rate limiting, Redis client
+│   │   ├── tests/           # pytest suite
+│   │   ├── main.py · models.py · schemas.py · config.py · celery_app.py
+│   ├── alembic/             # migrations: baseline · scan_jobs · scan_opt_outs
+│   ├── Dockerfile · entrypoint.sh · requirements*.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                  # API client and endpoint helpers
-│   │   ├── components/           # Reusable UI components
-│   │   ├── context/              # Authentication context
-│   │   ├── pages/                # Login, signup, dashboard, detail
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── vite.config.js
-├── .github/workflows/            # CI workflow
-├── docker-compose.yml            # Full local service stack
-├── PROGRESS.md                   # Detailed development log
-└── README.md
+│   │   ├── api/             # client, auth, domains, job polling
+│   │   ├── components/      # GradeBadge, ScanResult, ScoreTrendChart, …
+│   │   ├── context/         # auth context
+│   │   └── pages/           # Login · Signup · Dashboard · DomainDetail
+│   ├── Dockerfile · nginx.conf
+├── .github/
+│   ├── workflows/ci.yml
+│   └── readme/              # animated SVGs used by this README
+├── docker-compose.yml · Makefile · PROGRESS.md
 ```
 
-## 📚 Project documentation
+</details>
 
-- **[PROGRESS.md](PROGRESS.md)** — detailed build log, architecture notes, implementation decisions, and development workflow.
-- **[Backend API docs](http://127.0.0.1:8000/docs)** — interactive Swagger documentation when the backend is running.
-- **[Issues](https://github.com/arman080325/SiteShield-Web/issues)** — report bugs or suggest improvements.
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
-## 👨‍💻 Author
+> [!WARNING]
+> **Scan responsibly.** Only scan domains you own or are explicitly authorised to assess. SiteShield checks *publicly observable configuration*; it is not a penetration test, code audit or incident-response tool, and automated findings should be reviewed before you act on them.
+
+## ◈ Author
 
 <div align="center">
 
-**Arman Ahemad Khan**
+<img src="https://img.shields.io/badge/Arman_Ahemad_Khan-0a1f19?style=for-the-badge" alt="Arman Ahemad Khan"/>
 
-Computer Science & Engineering · Cybersecurity · Full-Stack Development
+<sub>Computer Science &amp; Engineering · Cybersecurity · Full-stack development</sub>
 
-[![GitHub](https://img.shields.io/badge/GitHub-arman080325-181717?style=for-the-badge&logo=github)](https://github.com/arman080325)
+<br/><br/>
+
+<a href="https://github.com/arman080325"><img src="https://img.shields.io/badge/GitHub-arman080325-10b981?style=for-the-badge&logo=github&logoColor=white&labelColor=0a1f19" alt="GitHub profile"/></a>
 
 </div>
 
-## 📄 License
+## ◈ License
 
-No license file was found in the repository when this README was prepared. Until a license is added, do not assume the source is available for unrestricted reuse.
+No license file has been added yet. Until one is, the source is **not** licensed for unrestricted reuse.
 
----
+<img src=".github/readme/divider.svg" width="100%" alt=""/>
 
 <div align="center">
 
-**SiteShield — Make your website's security posture visible.**
+**SiteShield** — *make your website's security posture visible.*
 
-<sub>Built with curiosity, security-first thinking, and a focus on continuous improvement.</sub>
+<sub>If SiteShield helped you, a ⭐ on the repo keeps the radar spinning.</sub>
 
 </div>
